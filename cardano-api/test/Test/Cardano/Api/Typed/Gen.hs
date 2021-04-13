@@ -82,7 +82,7 @@ genScript :: ScriptLanguage lang -> Gen (Script lang)
 genScript (SimpleScriptLanguage lang) =
     SimpleScript lang <$> genSimpleScript lang
 genScript (PlutusScriptLanguage PlutusScriptV1) =
-    error "TODO: genScript PlutusScriptV1 Unsure how to generate this currently"
+    panic "TODO: genScript: Generate a short bytestring "
 
 genSimpleScript :: SimpleScriptVersion lang -> Gen (SimpleScript lang)
 genSimpleScript lang =

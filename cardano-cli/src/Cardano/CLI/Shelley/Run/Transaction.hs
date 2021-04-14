@@ -34,8 +34,10 @@ import           Ouroboros.Consensus.Shelley.Eras (StandardAllegra, StandardMary
 import qualified Cardano.Binary as CBOR
 
 --TODO: following import needed for orphan Eq Script instance
+import qualified Cardano.Ledger.Core as Core
 import           Cardano.Ledger.ShelleyMA.TxBody ()
 import           Shelley.Spec.Ledger.Scripts ()
+import qualified Shelley.Spec.Ledger.Tx as Shelley
 
 import           Ouroboros.Consensus.Byron.Ledger (ByronBlock)
 import           Ouroboros.Consensus.Cardano.Block (EraMismatch (..))
@@ -670,7 +672,7 @@ runTxCalculateMinFee (TxBodyFile txbodyFile) nw protocolParamsSourceSpec
                      (TxShelleyWitnessCount nShelleyKeyWitnesses)
                      (TxByronWitnessCount nByronKeyWitnesses) = do
 
-    InAnyShelleyBasedEra _era txbody <-
+    InAnyShelleyBasedEra sbe txbody <-
           --TODO: in principle we should be able to support Byron era txs too
           onlyInShelleyBasedEras "calculate-min-fee for Byron era transactions"
       =<< readFileTxBody txbodyFile
@@ -684,7 +686,8 @@ runTxCalculateMinFee (TxBodyFile txbodyFile) nw protocolParamsSourceSpec
         ParamsFromFile f -> readProtocolParameters f
 
     let tx = makeSignedTransaction [] txbody
-        Lovelace fee = estimateTransactionFee
+        Lovelace fee = obtainLedgerEraClassConstraints sbe
+                         $ estimateTransactionFee
                              (fromMaybe Mainnet nw)
                              (protocolParamTxFeeFixed pparams)
                              (protocolParamTxFeePerByte pparams)
@@ -1087,3 +1090,12 @@ readFileTxMetadata _ (MetadataFileCBOR fp) = do
     firstExceptT (ShelleyTxCmdMetaValidationError fp) $ hoistEither $ do
         validateTxMetadata txMetadata
         return txMetadata
+
+
+obtainLedgerEraClassConstraints
+  :: ShelleyLedgerEra era ~ ledgerera
+  => ShelleyBasedEra era
+  -> (Core.Tx ledgerera ~ Shelley.Tx ledgerera => a) -> a
+obtainLedgerEraClassConstraints ShelleyBasedEraShelley f = f
+obtainLedgerEraClassConstraints ShelleyBasedEraAllegra f = f
+obtainLedgerEraClassConstraints ShelleyBasedEraMary    f = f

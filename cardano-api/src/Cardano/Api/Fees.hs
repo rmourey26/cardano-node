@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE EmptyCase #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -64,17 +65,18 @@ transactionFee txFeeFixed txFeePerByte tx =
 -- contain all the things not subject to coin selection (such as script inputs,
 -- metadata, withdrawals, certs etc)
 --
-estimateTransactionFee :: forall era.
-                          IsShelleyBasedEra era
-                       => NetworkId
-                       -> Natural -- ^ The fixed tx fee
-                       -> Natural -- ^ The tx fee per byte
-                       -> Tx era
-                       -> Int -- ^ The number of extra UTxO transaction inputs
-                       -> Int -- ^ The number of extra transaction outputs
-                       -> Int -- ^ The number of extra Shelley key witnesses
-                       -> Int -- ^ The number of extra Byron key witnesses
-                       -> Lovelace
+estimateTransactionFee
+  :: forall era.
+     IsShelleyBasedEra era
+  => NetworkId
+  -> Natural -- ^ The fixed tx fee
+  -> Natural -- ^ The tx fee per byte
+  -> Tx era
+  -> Int -- ^ The number of extra UTxO transaction inputs
+  -> Int -- ^ The number of extra transaction outputs
+  -> Int -- ^ The number of extra Shelley key witnesses
+  -> Int -- ^ The number of extra Byron key witnesses
+  -> Lovelace
 estimateTransactionFee nw txFeeFixed txFeePerByte (ShelleyTx era tx) =
     let Lovelace baseFee = transactionFee txFeeFixed txFeePerByte (ShelleyTx era tx)
      in \nInputs nOutputs nShelleyKeyWitnesses nByronKeyWitnesses ->

@@ -65,9 +65,7 @@ import qualified Ouroboros.Consensus.Shelley.ShelleyHFC as Consensus
 
 import qualified Cardano.Chain.Block as Byron
 import qualified Cardano.Chain.UTxO as Byron
-import qualified Cardano.Ledger.Core as Core
-import qualified Cardano.Ledger.Era as Ledger
-import           Cardano.Ledger.SafeHash (SafeToHash)
+import qualified Cardano.Ledger.Alonzo.TxSeq as Alonzo
 
 import qualified Shelley.Spec.Ledger.BlockChain as Shelley
 
@@ -145,18 +143,22 @@ getBlockTxs (ByronBlock Consensus.ByronBlock { Consensus.byronBlockRaw }) =
               Byron.bodyTxPayload = Byron.ATxPayload txs
             }
         } -> map ByronTx txs
-getBlockTxs (ShelleyBlock shelleyEra Consensus.ShelleyBlock{Consensus.shelleyBlockRaw})
-  = case shelleyEra of
-      ShelleyBasedEraShelley -> go
-      ShelleyBasedEraAllegra -> go
-      ShelleyBasedEraMary    -> go
-      ShelleyBasedEraAlonzo  ->
-        error "getBlockTxs: Alonzo era not implemented yet"
-  where
-    go :: Ledger.TxSeq (ShelleyLedgerEra era) ~ Shelley.TxSeq (ShelleyLedgerEra era)
-       => SafeToHash (Core.Witnesses (ShelleyLedgerEra era))
-       => Consensus.ShelleyBasedEra (ShelleyLedgerEra era) => [Tx era]
-    go = case shelleyBlockRaw of Shelley.Block _header (Shelley.TxSeq txs) -> [ShelleyTx shelleyEra x | x <- toList txs]
+getBlockTxs (ShelleyBlock shelleyEra Consensus.ShelleyBlock{Consensus.shelleyBlockRaw}) =
+  case shelleyEra of
+    ShelleyBasedEraShelley ->
+      let Shelley.Block _header (Shelley.TxSeq txs) = shelleyBlockRaw
+      in [ShelleyTx ShelleyBasedEraShelley x | x <- toList txs]
+    ShelleyBasedEraAllegra ->
+      let Shelley.Block _header (Shelley.TxSeq txs) = shelleyBlockRaw
+      in [ShelleyTx ShelleyBasedEraAllegra x | x <- toList txs]
+    ShelleyBasedEraMary ->
+      let Shelley.Block _header (Shelley.TxSeq txs) = shelleyBlockRaw
+      in [ShelleyTx ShelleyBasedEraMary x | x <- toList txs]
+    ShelleyBasedEraAlonzo ->
+      case shelleyBlockRaw of
+        Shelley.Block _header (Alonzo.TxSeq txs) ->
+         [ShelleyTx ShelleyBasedEraAlonzo x | x <- map (convertValidatedTx shelleyEra) (toList txs)]
+        Shelley.Block _ _ -> error "getBlockTxs: Why do we have to pattern match again?"
 
 -- ----------------------------------------------------------------------------
 -- Block in a consensus mode

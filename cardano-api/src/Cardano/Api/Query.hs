@@ -40,6 +40,10 @@ module Cardano.Api.Query (
     SlotsToEpochEnd(..),
 
     slotToEpoch,
+
+    LedgerState(..),
+
+    getProgress,
   ) where
 
 import           Data.Aeson (ToJSON (..), object, (.=))
@@ -60,10 +64,11 @@ import           Ouroboros.Consensus.HardFork.Combinator.AcrossEras (EraMismatch
 import qualified Ouroboros.Consensus.HardFork.Combinator.AcrossEras as Consensus
 import qualified Ouroboros.Consensus.HardFork.Combinator.Degenerate as Consensus
 import qualified Ouroboros.Consensus.HardFork.History as History
-import qualified Ouroboros.Consensus.HardFork.History.Qry as Qry
 
+import Ouroboros.Consensus.BlockchainTime.WallClock.Types
+    ( RelativeTime, SlotLength, SystemStart )
 import qualified Ouroboros.Consensus.Byron.Ledger as Consensus
-import           Ouroboros.Consensus.Cardano.Block (StandardCrypto)
+import           Ouroboros.Consensus.Cardano.Block (StandardCrypto, LedgerState(..))
 import qualified Ouroboros.Consensus.Cardano.Block as Consensus
 import qualified Ouroboros.Consensus.Shelley.Ledger as Consensus
 import           Ouroboros.Network.Block (Serialised)
@@ -92,6 +97,8 @@ import           Cardano.Api.Value
 
 import           Data.Word (Word64)
 
+import qualified Ouroboros.Consensus.HardFork.History.Qry as Qry
+
 -- ----------------------------------------------------------------------------
 -- Queries
 --
@@ -110,6 +117,20 @@ data QueryInMode mode result where
     :: ConsensusModeIsMultiEra mode
     -> QueryInMode mode (EraHistory mode)
 
+  QuerySystemStart
+    :: ConsensusModeIsMultiEra mode
+    -> QueryInMode mode SystemStart
+
+data EraHistory mode where
+  EraHistory
+    :: ConsensusBlockForMode mode ~ Consensus.HardForkBlock xs
+    => ConsensusMode mode
+    -> History.Interpreter xs
+    -> EraHistory mode
+
+getProgress :: SlotNo -> EraHistory mode -> Either Qry.PastHorizonException (RelativeTime, SlotLength)
+getProgress slotNo (EraHistory _ interpreter) = Qry.interpretQuery interpreter (Qry.slotToWallclock slotNo)
+
 --TODO: add support for these
 --     QueryEraStart   :: ConsensusModeIsMultiEra mode
 --                     -> EraInMode era mode
@@ -118,13 +139,6 @@ data QueryInMode mode result where
 newtype SlotsInEpoch = SlotsInEpoch Word64
 
 newtype SlotsToEpochEnd = SlotsToEpochEnd Word64
-
-data EraHistory mode where
-  EraHistory
-    :: ConsensusBlockForMode mode ~ Consensus.HardForkBlock xs
-    => ConsensusMode mode
-    -> History.Interpreter xs
-    -> EraHistory mode
 
 slotToEpoch :: SlotNo -> EraHistory mode -> Either Qry.PastHorizonException (EpochNo, SlotsInEpoch, SlotsToEpochEnd)
 slotToEpoch slotNo (EraHistory _ interpreter) = case Qry.interpretQuery interpreter (Qry.slotToEpoch slotNo) of
@@ -295,15 +309,18 @@ fromShelleyRewardAccounts =
 toConsensusQuery :: forall mode block result.
                     ConsensusBlockForMode mode ~ block
                  => QueryInMode mode result
-                 -> Some (Consensus.Query block)
+                 -> Some (Consensus.BlockQuery block)
+toConsensusQuery (QueryEraHistory CardanoModeIsMultiEra) =
+    Some (Consensus.QueryHardFork Consensus.GetInterpreter)
+
 toConsensusQuery (QueryCurrentEra CardanoModeIsMultiEra) =
     Some (Consensus.QueryHardFork Consensus.GetCurrentEra)
 
+toConsensusQuery (QuerySystemStart CardanoModeIsMultiEra) =
+    Some (Consensus.QueryHardFork Consensus.GetSystemStart)
+
 toConsensusQuery (QueryInEra ByronEraInByronMode QueryByronUpdateState) =
     Some (Consensus.DegenQuery Consensus.GetUpdateInterfaceState)
-
-toConsensusQuery (QueryEraHistory CardanoModeIsMultiEra) =
-    Some (Consensus.QueryHardFork Consensus.GetInterpreter)
 
 toConsensusQuery (QueryInEra ByronEraInCardanoMode QueryByronUpdateState) =
     Some (Consensus.QueryIfCurrentByron Consensus.GetUpdateInterfaceState)
@@ -326,7 +343,7 @@ toConsensusQueryShelleyBased
   => block ~ Consensus.HardForkBlock xs
   => EraInMode era mode
   -> QueryInShelleyBasedEra era result
-  -> Some (Consensus.Query block)
+  -> Some (Consensus.BlockQuery block)
 toConsensusQueryShelleyBased erainmode QueryChainPoint =
     Some (consensusQueryInEraInMode erainmode Consensus.GetLedgerTip)
 
@@ -374,8 +391,8 @@ consensusQueryInEraInMode
   => modeblock ~ Consensus.HardForkBlock xs
   => Consensus.HardForkQueryResult xs result ~ result'
   => EraInMode era mode
-  -> Consensus.Query erablock  result
-  -> Consensus.Query modeblock result'
+  -> Consensus.BlockQuery erablock  result
+  -> Consensus.BlockQuery modeblock result'
 consensusQueryInEraInMode ByronEraInByronMode     = Consensus.DegenQuery
 consensusQueryInEraInMode ShelleyEraInShelleyMode = Consensus.DegenQuery
 consensusQueryInEraInMode ByronEraInCardanoMode   = Consensus.QueryIfCurrentByron
@@ -391,12 +408,17 @@ consensusQueryInEraInMode MaryEraInCardanoMode    = Consensus.QueryIfCurrentMary
 fromConsensusQueryResult :: forall mode block result result'.
                             ConsensusBlockForMode mode ~ block
                          => QueryInMode mode result
-                         -> Consensus.Query block result'
+                         -> Consensus.BlockQuery block result'
                          -> result'
                          -> result
 fromConsensusQueryResult (QueryEraHistory CardanoModeIsMultiEra) q' r' =
     case q' of
       Consensus.QueryHardFork Consensus.GetInterpreter -> EraHistory CardanoMode r'
+      _ -> fromConsensusQueryResultMismatch
+
+fromConsensusQueryResult (QuerySystemStart CardanoModeIsMultiEra) q' r' =
+    case q' of
+      Consensus.QueryHardFork Consensus.GetSystemStart -> r'
       _ -> fromConsensusQueryResultMismatch
 
 fromConsensusQueryResult (QueryCurrentEra CardanoModeIsMultiEra) q' r' =
@@ -470,7 +492,7 @@ fromConsensusQueryResultShelleyBased
   => Ledger.Crypto ledgerera ~ Consensus.StandardCrypto
   => ShelleyBasedEra era
   -> QueryInShelleyBasedEra era result
-  -> Consensus.Query (Consensus.ShelleyBlock ledgerera) result'
+  -> Consensus.BlockQuery (Consensus.ShelleyBlock ledgerera) result'
   -> result'
   -> result
 fromConsensusQueryResultShelleyBased _ QueryChainPoint q' point =

@@ -78,8 +78,8 @@ import qualified Shelley.Spec.Ledger.Keys as Shelley
 import qualified Shelley.Spec.Ledger.PParams as Shelley
 
 import           Cardano.Api.Address
-import           Cardano.Api.Hash
 import           Cardano.Api.HasTypeProxy
+import           Cardano.Api.Hash
 import           Cardano.Api.KeysByron
 import           Cardano.Api.KeysShelley
 import           Cardano.Api.NetworkId
@@ -88,7 +88,6 @@ import           Cardano.Api.SerialiseTextEnvelope
 import           Cardano.Api.StakePoolMetadata
 import           Cardano.Api.TxMetadata
 import           Cardano.Api.Value
-import           Cardano.Binary
 
 
 -- | The values of the set of /updateable/ protocol paramaters. At any
@@ -479,7 +478,7 @@ instance HasTextEnvelope UpdateProposal where
 instance SerialiseAsCBOR UpdateProposal where
     serialiseToCBOR = CBOR.serializeEncoding' . toCBOR . toShelleyUpdate @StandardShelley
     deserialiseFromCBOR _ bs =
-      fromShelleyUpdate @StandardShelley <$> decodeFull (LBS.fromStrict bs)
+      fromShelleyUpdate @StandardShelley <$> CBOR.decodeFull (LBS.fromStrict bs)
 
 
 makeShelleyUpdateProposal :: ProtocolParametersUpdate
@@ -492,7 +491,7 @@ makeShelleyUpdateProposal params genesisKeyHashes =
 
 
 -- ----------------------------------------------------------------------------
--- Genesis paramaters
+-- Genesis parameters
 --
 
 data GenesisParameters =

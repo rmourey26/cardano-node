@@ -160,6 +160,7 @@ applyBlock env oldState enableValidation block
         ShelleyBasedEraShelley -> Consensus.BlockShelley shelleyBlock
         ShelleyBasedEraAllegra -> Consensus.BlockAllegra shelleyBlock
         ShelleyBasedEraMary    -> Consensus.BlockMary shelleyBlock
+        ShelleyBasedEraAlonzo  -> Consensus.BlockAlonzo shelleyBlock
 
 pattern LedgerStateByron
   :: Ledger.LedgerState Byron.ByronBlock
@@ -619,9 +620,14 @@ mkProtocolInfoCardano (GenesisCardano dnc byronGenesis shelleyGenesis)
           Consensus.ProtocolParamsMary
             { Consensus.maryProtVer = shelleyProtVer dnc
             }
+          Consensus.ProtocolParamsAlonzo
+            { Consensus.alonzoGenesis = error "mkProtocolInfoCardano: alonzoGenesis"
+            , Consensus.alonzoProtVer = error "mkProtocolInfoCardano: alonzoProtVer"
+            }
           (ncByronToShelley dnc)
           (ncShelleyToAllegra dnc)
           (ncAllegraToMary dnc)
+          (error "mkProtocolInfoCardano: ProtocolParamsTransition (ShelleyBlock (MaryEra c)) (ShelleyBlock (AlonzoEra c))")
 
 shelleyPraosNonce :: ShelleyConfig -> Shelley.Spec.Nonce
 shelleyPraosNonce sCfg = Shelley.Spec.Nonce (Cardano.Crypto.Hash.Class.castHash . unGenesisHashShelley $ scGenesisHash sCfg)

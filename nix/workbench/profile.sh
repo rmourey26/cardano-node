@@ -63,8 +63,11 @@ case "${op}" in
         local usage="USAGE: wb profile get NAME"
         local name=${1:?$usage}
 
-        profile generate-all |
-        jq '.["'$name'"]'
+        if test -f  "$name"
+        then jq '.' "$name"
+        else profile generate-all |
+             jq '.["'$name'"]'
+        fi
         ;;
 
     describe )

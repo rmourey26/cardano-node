@@ -4,8 +4,6 @@
 set -euo pipefail
 
 global_basedir=${global_basedir:-$(realpath "$(dirname "$0")")}
-global_runsdir=${global_runsdir:-$(realpath "$global_basedir/../../runs")}
-global_cachedir="$HOME"/.cache/cardano-workbench
 global_mode='unknown'
 
 . "$global_basedir"/lib.sh
@@ -23,8 +21,7 @@ usage_main() {
     genesis      (g)      Genesis
     topology     (t)      Topology generation
     run          (r)      Managing cluster runs.  Default subop is 'list'
-
-    record       (c)      Re-enter the Nix-generated artifacts into the flawed world
+    cluster      (c)      Cluster state operation
 
     local        (l)      Managing local cluster
 
@@ -32,7 +29,6 @@ usage_main() {
 
   Options:
 
-    --cache-dir DIR       Set the cache directory;  Defaults to $global_cachedir
     --trace / --debug     set -x
     --help                This short help
     --help-full           Extended help
@@ -50,17 +46,12 @@ usage_extra() {
 
     --cls                 Clear screen, before acting further.
     --set-mode MODE       Set mode.  Only has effect on 'mode' OP
-    --runsdir DIR         Set the runs directory.  Defaults to $global_runsdir
 
 EOF
 }
 
 while test $# -gt 0
 do case "$1" in
-       --cachedir )
-           global_cachedir=$2; shift;;
-       --runsdir )
-           global_runsdir=$2; shift;;
        --cls )
            echo -en "\ec">&2;;
        --trace | --debug )

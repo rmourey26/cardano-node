@@ -4,6 +4,12 @@ to_jsonlist() {
     done | jq --slurp '.'
 }
 
+jq_fmutate() {
+    local f=$1; shift
+    test -f "$f" || { echo '{}' > "$f"; }
+    jq "$@" "$f" | sponge "$f"
+}
+
 __usage() {
     local op=$1 desc=$2
     cat >&2 <<EOF

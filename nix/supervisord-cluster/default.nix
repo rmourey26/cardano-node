@@ -158,12 +158,12 @@ let
 
     PATH=$PATH:${path}
 
-    genesis_args=()
+    batch_name=plain
 
     while test $# -gt 0
     do case "$1" in
+        --batch-name ) batch_name=$2; shift;;
         --trace | --debug ) set -x;;
-        --force-genesis ) genesis_args+=(--force);;
         --trace-wb | --trace-workbench ) export workbench_extra_flags=--trace;;
         * ) break;; esac; shift; done
 
@@ -173,27 +173,18 @@ let
 
     wb profile describe ${profileName}
 
-    ${optionalString (stateDir != stateDirDefault)
-      ''
-      if test -e "${stateDir}" && test ! -f "${stateDir}"/supervisor/workbench-token
-      then echo "workbench ERROR:  state directory exists, but looks suspicious -- decide on removing it manually to continue:  rm -rf ${stateDir}" >&2
-           exit 1
-      fi
-      ''}
+    if test -e "${stateDir}" -a ! -L "${stateDir}"
+    then echo "workbench ERROR:  state directory exists, but is not a symlink -- please remove it or choose another:  ${stateDir}"; exit 1; fi
 
-    rm -rf   "${stateDir}"
-    mkdir -p "${stateDir}"/supervisor "${cacheDir}"
-    touch    "${stateDir}"/supervisor/workbench-token
+    wb_run_allocate_args=(
+        --cachedir "${cacheDir}"
+      )
+    wb run "''${wb_run_allocate_args[@]}" allocate $batch_name ${profile.name}
 
-    ln -s ${profile.topology.files} "${stateDir}"/topology
+    ln -sf "$(wb run current-path)" "${stateDir}"
+    mkdir -p                        "${stateDir}"/supervisor
 
-    genesis_args+=(
-        ## Positionals:
-        ${profile.JSON}
-        ${profile.topology.files}
-        "${stateDir}"/genesis
-        )
-    wb genesis prepare "''${genesis_args[@]}"
+    wb run start $(wb run current-name)
 
     ${backend.deploy   profile}
     ${backend.activate profile}

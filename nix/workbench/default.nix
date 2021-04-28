@@ -81,14 +81,14 @@ let
     ''
     echo 'workbench:  dev mode enabled, calling wb directly from checkout (instead of using Nix store)' >&2
 
-    workbench_cardano_node_repo_root=$(git rev-parse --show-toplevel)
-    workbench_extra_flags=
+    WORKBENCH_CARDANO_NODE_REPO_ROOT=$(git rev-parse --show-toplevel)
+    WORKBENCH_EXTRA_FLAGS=
 
     function wb() {
-      $workbench_cardano_node_repo_root/nix/workbench/wb --set-mode ${checkoutWbMode} $workbench_extra_flags "$@"
+      $WORKBENCH_CARDANO_NODE_REPO_ROOT/nix/workbench/wb --set-mode ${checkoutWbMode} $WORKBENCH_EXTRA_FLAGS "$@"
     }
 
-    export workbench_cardano_node_repo_root workbench_extra_flags
+    export WORKBENCH_CARDANO_NODE_REPO_ROOT WORKBENCH_EXTRA_FLAGS
     export -f wb
 
     ''}
@@ -136,10 +136,10 @@ let
     ## The backend is an attrset of AWS/supervisord-specific methods and parameters.
     , backend
 
-    ## Environmental settings:
+    ## Environment arguments:
     ##   - either affect semantics on all backends equally,
     ##   - or have no semantic effect
-    , environment
+    , envArgs
     }:
     rec {
       profile-names-json =
@@ -147,6 +147,20 @@ let
 
       profile-names =
         __fromJSON (__readFile profile-names-json);
+
+      environment =
+        ## IMPORTANT:  keep in sync with envArgs in 'supervisord-cluster/default.nix/envArgs'.
+        with envArgs; rec {
+          inherit cardanoLib stateDir;
+
+          JSON = runWorkbench "environment.json"
+          ''env compute-config \
+            --cachedir  "${cacheDir}" \
+            --base-port ${toString basePort} \
+            ${optionalString staggerPorts "--stagger-ports"} \
+          '';
+          value = __fromJSON (__readFile JSON);
+        };
 
       mkProfile =
         profileName:

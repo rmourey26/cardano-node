@@ -1,26 +1,17 @@
-global_cachedir_def="$HOME"/.cache/cardano-workbench
-global_port_base_def=30000
 global_runsdir_def=${global_runsdir:-$(realpath "$global_basedir/../../run")}
 global_runsdir=$global_runsdir_def
 
 usage_run() {
      usage "run" "Managing cluster runs" <<EOF
 
-    print-env-config [ENV-CONFIG-OPTS..] ENV-CONFIG-FILE
-                          Output an environment config file with following options:
-        --cachedir DIR       Set the cache directory;  Defaults to $global_cachedir_def
-        --port-base PORTNO   Set base port number
-        --stagger-ports      Whether to allocate different ports for each node;
-                               Default is no port staggering.
-
     list                  List cluster runs
 
-    allocate BATCH-NAME PROFILE-NAME
+    allocate BATCH-NAME PROFILE-NAME [ENV-CONFIG-OPTS..]
                           Allocate a cluster run with the specified:
                             - batch key (no semantics attached)
                             - profile name
                           A unique name would be allocated for this run,
-                            and a run alias 'current' will be created for it
+                            and a run alias 'current' will be created for it.
 
     start NAME            Start the named run
 
@@ -39,27 +30,7 @@ do case "$1" in
 
 local op=${1:-list}; test $# -gt 0 && shift
 
-case "${op}" in
-    print-env-config )
-        local usage="USAGE: wb run OPTS.. print-env-config"
-
-        local v=(
-            --arg     cachedir      "$global_cachedir_def"
-            --argjson port_base     "$global_port_base_def"
-            --argjson stagger_ports 'false'
-            )
-
-        while test $# -gt 0; do case "$1" in
-           --cachedir )      v=(--arg     cachedir      "$2"  "${v[@]}"); shift;;
-           --port-base )     v=(--argjson port_base      $2   "${v[@]}"); shift;;
-           --stagger-ports ) v=(--argjson stagger_ports  true "${v[@]}");;
-           * ) fatal "wb run print-env-config: unknown args: $*";; esac
-           shift; done
-
-        jq '{ cachedir:      $cachedir
-            , port_base;     $port_base
-            , stagger_ports: $stagger_ports
-            }' --null-input "${v[@]}";;
+case "$op" in
     list )
         test -d "$global_runsdir" && cd "$global_runsdir" &&
             ls | {
@@ -68,23 +39,31 @@ case "${op}" in
         ;;
 
     show | s )
-        local usage="USAGE: wb run show RUN-NAME"
+        local usage="USAGE: wb run $op RUN-NAME"
         local name=${1:?$usage}
 
         local dir=$global_runsdir/$name
         jq '.' "$dir"/meta.json
         ;;
 
-    set-current )
-        local usage="USAGE: wb run set-current RUN-NAME"
+    check )
+        local usage="USAGE: wb run $op RUN-NAME"
         local name=${1:?$usage}
         local dir=$global_runsdir/$name
 
-        local sanity_tests=(
-            -f "$dir"/profile.json -a
-            -f "$dir"/meta.json
-        )
-        if ! test "${sanity_tests[@]}"
+        for f in "$dir"/{profile,env,meta}.json
+        do if ! jq_check_json "$f"
+           then return 1
+           fi
+        done
+        ;;
+
+    set-current | set )
+        local usage="USAGE: wb run $op RUN-NAME"
+        local name=${1:?$usage}
+        local dir=$global_runsdir/$name
+
+        if ! run check "$name"
         then fatal "run fails sanity checks:  $name at $dir"; fi
 
         rm -f       "$global_runsdir"/current
@@ -106,35 +85,59 @@ case "${op}" in
         jq '.' "$(run current-path)"/profile.json;;
 
     allocate )
-        local usage="USAGE: wb run allocate BATCH-NAME PROFILE-NAME"
+        local usage="USAGE: wb run $op BATCH-NAME PROFILE-NAME [ENV-CONFIG-OPTS..] [-- BACKEND-ENV-CONFIG-OPTS..]"
         local batch=${1:?$usage}
         local prof=${2:?$usage}
+
+        local cacheDir=$default_cacheDir basePort=$default_basePort staggerPorts='false' got_backend_opts=
+        while test $# -gt 0
+        do case "$1" in
+               --cache-dir )     cacheDir=$2; shift;;
+               --base-port )     basePort=$2; shift;;
+               --stagger-ports ) staggerPorts=true; shift;;
+               # -- )              got_backend_opts=true; break;;
+               --* ) msg "FATAL:  unknown flag '$1'"; usage_run;;
+               * ) break;; esac; shift; done
 
         local epoch=$(date +'%s' --utc)
         local time=$(date +'%Y'-'%m'-'%d'-'%H.%M' --date=@$epoch --utc)
         local name=$time.$batch.$prof
-
         local dir=$global_runsdir/$name
-        local failure_tests=(
-            "$(realpath --canonicalize-missing "$dir")" = "$(realpath "$global_runsdir")"
-            -o -d "$dir"
-            -o -f "$dir"/meta.json
-            -o -f "$dir"/profile.json
-        )
-        if test "${failure_tests[@]}"
-        then fatal "bad, bad run name/run dir:  $name @ $dir"; fi
+        local realdir=$(realpath --canonicalize-missing "$dir")
+
+        if test "$(dirname "$realdir")" != "$(realpath "$global_runsdir")"
+        then fatal "bad run name/run dir:  $name @ $dir"; fi
+
+        if test -e "$dir"
+        then fatal "run name busy:  $name @ $dir"; fi
 
         if ! profile has-profile          "$prof"
         then fatal      "no such profile:  $prof"; fi
 
-        mkdir -p "$global_cachedir" && test -w "$global_cachedir" ||
+        mkdir -p "$cacheDir" && test -w "$global_cachedir" ||
             fatal "failed to create writable cache directory:  $global_cachedir"
 
         mkdir -p "$dir" && test -w "$dir" ||
             fatal "failed to create writable run directory:  $dir"
 
+        local env_json="$dir"/env.json
+        local args=(
+            --arg     cacheDir    "$cacheDir"
+            --argjson basePort     $basePort
+            --argjson staggerPorts $staggerPorts
+        )
+        jq_fmutate "$env_json" '
+          { cacheDir:     $cacheDir
+          , basePort:     $basePort
+          , staggerPorts: $staggerPorts
+          }
+        ' "${args[@]}"
+
+        if test -n "$got_backend_opts"
+        then backend record-extended-env-config "$env_json" "$@"; fi
+
         profile get "$prof" > "$dir"/profile.json
-        profile node-specs    "$dir"/profile.json
+        profile node-specs    "$dir"/profile.json "$dir"/env.json > "$dir"/node-specs.json
 
         local args=(
             --arg name      $name
@@ -142,10 +145,6 @@ case "${op}" in
             --arg prof      $prof
             --arg epoch     $epoch
             --arg time      $time
-
-            ## Administrativia
-            --arg cache_dir "$(realpath "$global_cachedir")"
-            --arg port_base $port_base
         )
         jq_fmutate "$dir"/meta.json '. *
            { name:      $name
@@ -153,46 +152,56 @@ case "${op}" in
            , profile:   $prof
            , epoch:     $epoch
            , time:      $time
-
-           ## Administrativia:
-           , admin:
-             { cache_dir:     $cache_dir
-             , port_base:     $port_base
-             , stagger_ports: $stagger_ports
-             }
            }
            ' "${args[@]}"
 
         topology make    "$dir"/profile.json "$dir"/topology
 
-        profile describe "$dir"/profile.json
+        for node in $(jq_tolist 'keys' "$dir"/node-specs.json)
+        do local node_dir="$dir"/$node
+           mkdir -p                           "$node_dir"
+           jq .$node "$dir"/node-specs.json > "$node_dir"/node-spec.json
+        done
 
-        msg "allocated new run:  $name at $dir"
+        run     describe "$dir"
+        profile describe "$dir"/profile.json
+        ;;
+
+    describe )
+        local usage="USAGE: wb run $op RUN-NAME"
+        local name=${1:?$usage}
+        local dir=$global_runsdir/$name
+
+        if ! run check "$name"
+        then fatal "run fails sanity checks:  $name at $dir"; fi
+
+        cat <<EOF
+workbench:  run $name params:
+  - run dir:         $dir
+  - profile JSON:    $dir/profile.json
+  - node specs:      $dir/node-specs.json
+  - topology:        $dir/topology/topology-nixops.json $dir/topology/topology.pdf
+  - node base port:  $(jq .basePort "$dir"/env.json)
+EOF
+        backend describe-run "$dir"
         ;;
 
     start )
-        local usage="USAGE: wb run start RUN-NAME"
-        local name=${1:-$()?$usage}
+        local usage="USAGE: wb run $op RUN-NAME"
+        local name=${1:-?$usage}
 
         run set-current "$name"
-        local current_run_path=$(run current-path)
-        local cache_dir=$(jq .cache_dir "$current_run_path"/meta.json)
+        local currentRunPath=$(run current-path)
+        local cacheDir=$(jq .cacheDir "$currentRunPath"/meta.json)
 
         local genesis_args+=(
             ## Positionals:
-            "$cache_dir"/genesis
-            "$current_run_path"/profile.json
-            "$current_run_path"/topology
-            "$current_run_path"/genesis
+            "$cacheDir"/genesis
+            "$currentRunPath"/profile.json
+            "$currentRunPath"/topology
+            "$currentRunPath"/genesis
         )
         genesis prepare "''${genesis_args[@]}"
-        ;;
-
-    ### Undocumented
-    describe | d )
-        cat <<EOF
-global_runsdir=$global_runsdir
-EOF
         ;;
 
     * ) usage_run;; esac

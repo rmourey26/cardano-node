@@ -1,0 +1,21 @@
+{
+  "acceptAt": {
+    "tag": "RemoteSocket",
+    "contents": [
+      "127.0.0.1",
+      3000
+    ]
+  },
+  "loRequestNum": 1,
+  "ekgRequestFreq": 1,
+  "hasEKG": null,
+  "hasPrometheus": null,
+  "logging": [
+    {
+      "logRoot": "logs",
+      "logMode": "FileMode",
+      "logFormat": "AsJSON"
+    }
+  ],
+  "rotation": null
+}

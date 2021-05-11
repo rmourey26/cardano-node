@@ -1,0 +1,14 @@
+* Traces involved:
+  |                     | component         | role   | trace                                    |
+  |---------------------+-------------------+--------+------------------------------------------|
+  | slot start          | blockchain time   | forger | any with slot#                           |
+  | positive leadership | forge             | forger | TraceNodeIsLeader                        |
+  | block forged        | forge             | forger | TraceForgedBlock                         |
+  | block adopted       | chaindb           | forger | AddedToCurrentChain / TraceAddBlockEvent |
+  | header advertisment | chainsync server  | forger | TraceChainSyncServerRead                 |
+  | block send          | blockfetch server | forger | TraceBlockFetchServerSendBlock           |
+  | header notice       | chainsync client  | peer   | TraceDownloadedHeader                    |
+  | block receipt       | blockfetch client | peer   | CompletedFetchBatch                      |
+  | adoption            | chaindb           | peer   | AddedToCurrentChain / TraceAddBlockEvent |
+  | header advertisment | chainsync server  | peer   | TraceChainSyncServerRead                 |
+  | block send          | blockfetch server | peer   | TraceBlockFetchServerSendBlock           |

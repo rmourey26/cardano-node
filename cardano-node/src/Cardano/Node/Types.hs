@@ -304,13 +304,28 @@ data NodeByronProtocolConfiguration =
 data NodeHardForkProtocolConfiguration =
      NodeHardForkProtocolConfiguration {
 
+       -- | During development and integration of new eras we wish to be able
+       -- to test the hard fork transition into the new era, but we do not wish
+       -- to generally have the node advertise that it understands the new era.
+       -- Avoiding advertising new development eras until they are ready makes
+       -- it practical to include new not-yet-ready eras into the main release
+       -- version of the node without the danger that operators on the mainnet
+       -- will prematurely advertise that their nodes are capable of crossing
+       -- the next hard fork.
+       --
+       -- This flag should be set to true for nodes in testnets where the
+       -- testnet purpose is to test the new era. It should /always/ remain at
+       -- the default of false for nodes on mainnet.
+       --
+       npcTestEnableUnstableEras :: Bool
+
        -- | For testing purposes we support specifying that the hard fork
        -- happens at an exact epoch number (ie the first epoch of the new era).
        --
        -- Obviously if this is used, all the nodes in the test cluster must be
        -- configured the same, or they will disagree.
        --
-       npcTestShelleyHardForkAtEpoch :: Maybe EpochNo
+     , npcTestShelleyHardForkAtEpoch :: Maybe EpochNo
 
        -- | For testing purposes we support specifying that the hard fork
        -- happens at a given major protocol version. For example this can be
@@ -371,7 +386,6 @@ data NodeHardForkProtocolConfiguration =
        -- configured the same, or they will disagree.
        --
      , npcTestAlonzoHardForkAtVersion :: Maybe Word
-     -- TODO: npcTestEnableDevelopmentHardForkEras :: Bool
      }
   deriving (Eq, Show)
 

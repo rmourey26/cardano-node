@@ -227,6 +227,8 @@ instance FromJSON PartialNodeConfiguration where
              }
 
       parseHardForkProtocol v = do
+        npcTestEnableUnstableEras <- v .:? "TestEnableUnstableEras" .!= False
+
         npcTestShelleyHardForkAtEpoch   <- v .:? "TestShelleyHardForkAtEpoch"
         npcTestShelleyHardForkAtVersion <- v .:? "TestShelleyHardForkAtVersion"
 
@@ -240,6 +242,8 @@ instance FromJSON PartialNodeConfiguration where
         npcTestAlonzoHardForkAtVersion <- v .:? "TestAlonzoHardForkAtVersion"
 
         pure NodeHardForkProtocolConfiguration {
+               npcTestEnableUnstableEras,
+
                npcTestShelleyHardForkAtEpoch,
                npcTestShelleyHardForkAtVersion,
 

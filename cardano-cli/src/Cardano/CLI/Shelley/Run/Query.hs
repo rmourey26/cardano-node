@@ -261,6 +261,22 @@ runQueryTip (AnyConsensusModeParams cModeParams) network mOutFile = do
 
       mode -> left (ShelleyQueryCmdUnsupportedMode (AnyConsensusMode mode))
 
+    mPartialLedgerConfig
+      :: AnyCardanoEra
+      -> ConsensusMode mode
+      -> LocalNodeConnectInfo mode
+      -> SlotNo
+      -> ExceptT ShelleyQueryCmdError IO (Either Qry.PastHorizonException (RelativeTime, SlotLength))
+    mPartialLedgerConfig _ cMode lNodeConnInfo slotNo = case cMode of
+      CardanoMode -> do
+        let epochQuery = QueryPartialLedgerConfig CardanoModeIsMultiEra  -- QueryInShelleyBasedEra sbe QueryEpoch
+        eResult <- liftIO $ queryNodeLocalState lNodeConnInfo Nothing epochQuery
+        case eResult of
+          Left acqFail -> left (ShelleyQueryCmdGeneric (show acqFail))
+          Right eraHistory -> return $ getProgress slotNo eraHistory
+
+      mode -> left (ShelleyQueryCmdGeneric ("Not cardano mode: " <> show mode))
+
     mProgressQuery
       :: AnyCardanoEra
       -> ConsensusMode mode

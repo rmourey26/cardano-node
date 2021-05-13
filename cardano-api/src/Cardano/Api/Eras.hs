@@ -29,6 +29,7 @@ module Cardano.Api.Eras
   , ShelleyBasedEra(..)
   , IsShelleyBasedEra(..)
   , InAnyShelleyBasedEra(..)
+  , shelleyBasedEraToCardanoEra
 
     -- ** Mapping to era types from the Shelley ledger library
   , ShelleyLedgerEra
@@ -272,6 +273,12 @@ data InAnyShelleyBasedEra thing where
                           => ShelleyBasedEra era   -- and explicit value.
                           -> thing era
                           -> InAnyShelleyBasedEra thing
+
+shelleyBasedEraToCardanoEra :: ShelleyBasedEra era -> CardanoEra era
+shelleyBasedEraToCardanoEra ShelleyBasedEraShelley = ShelleyEra
+shelleyBasedEraToCardanoEra ShelleyBasedEraAllegra = AllegraEra
+shelleyBasedEraToCardanoEra ShelleyBasedEraMary    = MaryEra
+shelleyBasedEraToCardanoEra ShelleyBasedEraAlonzo  = AlonzoEra
 
 
 -- ----------------------------------------------------------------------------

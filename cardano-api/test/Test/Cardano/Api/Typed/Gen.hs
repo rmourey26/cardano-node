@@ -678,4 +678,11 @@ genProtocolParameters =
     <*> genRational
     <*> genRational
     <*> genRational
+    -- TODO: Add proper support for these generators.
+    <*> return Nothing
+    <*> return mempty
+    <*> return mempty
+    <*> return Nothing
+    <*> return Nothing
+    <*> return Nothing
 

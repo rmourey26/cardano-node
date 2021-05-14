@@ -21,6 +21,7 @@ import qualified Cardano.Api.Protocol.Types as Cardano
 
 import           Cardano.Tracing.Constraints (TraceConstraints)
 import           Cardano.Tracing.Metrics (HasKESMetricsData, HasKESInfo)
+import           Ouroboros.Consensus.HardFork.Combinator.PartialConfig (HasPartialLedgerConfig)
 
 data Protocol = ByronProtocol
               | ShelleyProtocol
@@ -52,6 +53,7 @@ data SomeConsensusProtocol where
 
      SomeConsensusProtocol :: forall blk. ( Cardano.Protocol IO blk
                                           , HasKESMetricsData blk
+                                          , HasPartialLedgerConfig blk
                                           , HasKESInfo blk
                                           , TraceConstraints blk
                                           )

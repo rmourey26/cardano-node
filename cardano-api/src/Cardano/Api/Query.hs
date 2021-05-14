@@ -67,8 +67,7 @@ import qualified Ouroboros.Consensus.HardFork.Combinator.PartialConfig as PC
 import qualified Ouroboros.Consensus.HardFork.History as History
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
 
-import Ouroboros.Consensus.BlockchainTime.WallClock.Types
-    ( RelativeTime, SlotLength, SystemStart )
+import Ouroboros.Consensus.BlockchainTime.WallClock.Types (RelativeTime, SlotLength)
 import qualified Ouroboros.Consensus.Byron.Ledger as Consensus
 import           Ouroboros.Consensus.Cardano.Block (StandardCrypto, LedgerState(..))
 import qualified Ouroboros.Consensus.Cardano.Block as Consensus
@@ -118,10 +117,6 @@ data QueryInMode mode result where
   QueryEraHistory
     :: ConsensusModeIsMultiEra mode
     -> QueryInMode mode (EraHistory mode)
-
-  QuerySystemStart
-    :: ConsensusModeIsMultiEra mode
-    -> QueryInMode mode SystemStart
 
   QueryPartialLedgerConfig
     :: ConsensusModeIsMultiEra mode
@@ -331,9 +326,6 @@ toConsensusQuery (QueryEraHistory CardanoModeIsMultiEra) =
 toConsensusQuery (QueryCurrentEra CardanoModeIsMultiEra) =
     Some (Ledger.BlockQuery (Consensus.QueryHardFork Consensus.GetCurrentEra))
 
-toConsensusQuery (QuerySystemStart CardanoModeIsMultiEra) =
-    Some (Ledger.BlockQuery (Consensus.QueryHardFork Consensus.GetSystemStart))
-
 toConsensusQuery (QueryInEra ByronEraInByronMode QueryByronUpdateState) =
     Some (Ledger.BlockQuery (Consensus.DegenQuery Consensus.GetUpdateInterfaceState))
 
@@ -434,11 +426,6 @@ fromConsensusQueryResult (QueryPartialLedgerConfig CardanoModeIsMultiEra) q' r' 
 fromConsensusQueryResult (QueryEraHistory CardanoModeIsMultiEra) q' r' =
     case q' of
       Ledger.BlockQuery (Consensus.QueryHardFork Consensus.GetInterpreter) -> EraHistory CardanoMode r'
-      _ -> fromConsensusQueryResultMismatch
-
-fromConsensusQueryResult (QuerySystemStart CardanoModeIsMultiEra) q' r' =
-    case q' of
-      Ledger.BlockQuery (Consensus.QueryHardFork Consensus.GetSystemStart) -> r'
       _ -> fromConsensusQueryResultMismatch
 
 fromConsensusQueryResult (QueryCurrentEra CardanoModeIsMultiEra) q' r' =

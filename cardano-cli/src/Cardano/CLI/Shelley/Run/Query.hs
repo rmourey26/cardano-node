@@ -52,7 +52,7 @@ import           Cardano.Crypto.Hash (hashToBytesAsHex)
 import qualified Cardano.Ledger.Crypto as Crypto
 import qualified Cardano.Ledger.Era as Era
 import qualified Cardano.Ledger.Shelley.Constraints as Ledger
-import           Ouroboros.Consensus.BlockchainTime.WallClock.Types (RelativeTime (..), SlotLength, SystemStart, toRelativeTime)
+import           Ouroboros.Consensus.BlockchainTime.WallClock.Types (RelativeTime (..), SlotLength, SystemStart (..), toRelativeTime)
 import           Ouroboros.Consensus.Cardano.Block as Consensus (EraMismatch (..))
 import           Ouroboros.Consensus.Shelley.Protocol (StandardCrypto)
 import           Ouroboros.Network.Block (Serialised (..))
@@ -72,8 +72,6 @@ import Text.Printf(printf)
 import Data.SOP.Strict
 import Cardano.Chain.Genesis
     ( Config(configGenesisData), GenesisData(gdStartTime) ) 
-import Cardano.Slotting.Time
-    ( SystemStart(getSystemStart))
 
 import Ouroboros.Consensus.HardFork.Combinator.Basics
     ( HardForkLedgerConfig(..) )
@@ -238,11 +236,9 @@ runQueryTip (AnyConsensusModeParams cModeParams) network mOutFile = do
 
   let jsonTipTime :: Aeson.Value = either identity (toJSON . relativeTimeSeconds) tipTimeResult
 
-  systemStart <- mSystemStartQuery anyEra consensusMode localNodeConnInfo
+  systemStart <- mStartTime consensusMode localNodeConnInfo
 
-  systemStart2 <- mStartTime consensusMode localNodeConnInfo
-
-  nowSeconds <- toRelativeTime systemStart <$> liftIO getCurrentTime
+  nowSeconds <- toRelativeTime (SystemStart systemStart) <$> liftIO getCurrentTime
 
   let tolerance = RelativeTime (secondsToNominalDiffTime 600)
   let jsonSyncProgress = either identity (toJSON . flip (percentage tolerance) nowSeconds) tipTimeResult
@@ -253,8 +249,7 @@ runQueryTip (AnyConsensusModeParams cModeParams) network mOutFile = do
         . toObject "tipTime" (Just jsonTipTime)
         . toObject "now" (Just (relativeTimeSeconds nowSeconds))
         . toObject "syncProgress" (Just jsonSyncProgress)
-        . toObject "systemStart1" (Just (getSystemStart systemStart))
-        . toObject "systemStart2" (Just systemStart2)
+        . toObject "systemStart" (Just systemStart)
         $ toJSON tip
 
   case mOutFile of
@@ -312,21 +307,6 @@ runQueryTip (AnyConsensusModeParams cModeParams) network mOutFile = do
         case eResult of
           Left acqFail -> left (ShelleyQueryCmdGeneric (show acqFail))
           Right eraHistory -> return $ getProgress slotNo eraHistory
-
-      mode -> left (ShelleyQueryCmdGeneric ("Not cardano mode: " <> show mode))
-
-    mSystemStartQuery
-      :: AnyCardanoEra
-      -> ConsensusMode mode
-      -> LocalNodeConnectInfo mode
-      -> ExceptT ShelleyQueryCmdError IO SystemStart
-    mSystemStartQuery _ cMode lNodeConnInfo = case cMode of
-      CardanoMode -> do
-        let epochQuery = QuerySystemStart CardanoModeIsMultiEra  -- QueryInShelleyBasedEra sbe QueryEpoch
-        eResult <- liftIO $ queryNodeLocalState lNodeConnInfo Nothing epochQuery
-        case eResult of
-          Left acqFail -> left (ShelleyQueryCmdGeneric (show acqFail))
-          Right systemStart -> return systemStart
 
       mode -> left (ShelleyQueryCmdGeneric ("Not cardano mode: " <> show mode))
 

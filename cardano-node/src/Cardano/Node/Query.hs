@@ -105,7 +105,6 @@ answerQueryWithLedgerState blkType protocol extLedgerState query = runIdentity $
     byronQuery :: blk ~ ByronBlockHFC => Identity result
     byronQuery =
         HF.singleEraCompatQuery
-          cfg
           epochSize
           slotLength
           answerQueryHelper
@@ -119,7 +118,6 @@ answerQueryWithLedgerState blkType protocol extLedgerState query = runIdentity $
     shelleyBasedQuery :: (blk ~ ShelleyBlockHFC era, Ouroboros.Consensus.Shelley.Eras.ShelleyBasedEra era) => Identity result
     shelleyBasedQuery =
         HF.singleEraCompatQuery
-          cfg
           epochSize
           slotLength
           answerQueryHelper

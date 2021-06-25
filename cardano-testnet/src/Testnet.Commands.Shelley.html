@@ -13,7 +13,7 @@
 </span><span id="line-13"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Options.Applicative</span></span><span>
 </span><span id="line-14"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">System.IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">IO</span></span><span class="hs-special">)</span><span>
 </span><span id="line-15"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><a href="Testnet.Run.html"><span class="hs-identifier">Testnet.Run</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Testnet.Run.html#runTestnet"><span class="hs-identifier">runTestnet</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-16"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><a href="Testnet.Shelley.html"><span class="hs-identifier">Testnet.Shelley</span></a></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Testnet.Shelley</span></span><span>
 </span><span id="line-17"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Text.Show</span></span><span>
 </span><span id="line-18"></span><span>
 </span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Options.Applicative</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">OA</span></span><span>
@@ -22,8 +22,8 @@
 </span><span id="line-22"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="maybeTestnetMagic"><span class="annot"><span class="annottext">ShelleyOptions -&gt; Maybe Int
 </span><a href="Testnet.Commands.Shelley.html#maybeTestnetMagic"><span class="hs-identifier hs-var hs-var">maybeTestnetMagic</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
 </span><span id="line-23"></span><span>  </span><span class="hs-special">,</span><span> </span><span id="testnetOptions"><span class="annot"><span class="annottext">ShelleyOptions -&gt; TestnetOptions
-</span><a href="Testnet.Commands.Shelley.html#testnetOptions"><span class="hs-identifier hs-var hs-var">testnetOptions</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Testnet.Shelley.html#TestnetOptions"><span class="hs-identifier hs-type">TestnetOptions</span></a></span><span>
-</span><span id="line-24"></span><span>  </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679094525"><span id="local-6989586621679094527"><span class="annot"><span class="annottext">ShelleyOptions -&gt; ShelleyOptions -&gt; Bool
+</span><a href="Testnet.Commands.Shelley.html#testnetOptions"><span class="hs-identifier hs-var hs-var">testnetOptions</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TestnetOptions</span></span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679065839"><span id="local-6989586621679065841"><span class="annot"><span class="annottext">ShelleyOptions -&gt; ShelleyOptions -&gt; Bool
 (ShelleyOptions -&gt; ShelleyOptions -&gt; Bool)
 -&gt; (ShelleyOptions -&gt; ShelleyOptions -&gt; Bool) -&gt; Eq ShelleyOptions
 forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
@@ -31,7 +31,7 @@ forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
 $c/= :: ShelleyOptions -&gt; ShelleyOptions -&gt; Bool
 == :: ShelleyOptions -&gt; ShelleyOptions -&gt; Bool
 $c== :: ShelleyOptions -&gt; ShelleyOptions -&gt; Bool
-</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679094518"><span id="local-6989586621679094520"><span id="local-6989586621679094522"><span class="annot"><span class="annottext">Int -&gt; ShelleyOptions -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679065832"><span id="local-6989586621679065834"><span id="local-6989586621679065836"><span class="annot"><span class="annottext">Int -&gt; ShelleyOptions -&gt; ShowS
 [ShelleyOptions] -&gt; ShowS
 ShelleyOptions -&gt; String
 (Int -&gt; ShelleyOptions -&gt; ShowS)
@@ -48,7 +48,7 @@ showsPrec :: Int -&gt; ShelleyOptions -&gt; ShowS
 $cshowsPrec :: Int -&gt; ShelleyOptions -&gt; ShowS
 </span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
 </span><span id="line-25"></span><span>
-</span><span id="line-26"></span><span class="annot"><a href="Testnet.Commands.Shelley.html#optsTestnet"><span class="hs-identifier hs-type">optsTestnet</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><a href="Testnet.Shelley.html#TestnetOptions"><span class="hs-identifier hs-type">TestnetOptions</span></a></span><span>
+</span><span id="line-26"></span><span class="annot"><a href="Testnet.Commands.Shelley.html#optsTestnet"><span class="hs-identifier hs-type">optsTestnet</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">TestnetOptions</span></span><span>
 </span><span id="line-27"></span><span id="optsTestnet"><span class="annot"><span class="annottext">optsTestnet :: Parser TestnetOptions
 </span><a href="Testnet.Commands.Shelley.html#optsTestnet"><span class="hs-identifier hs-var hs-var">optsTestnet</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
 -&gt; Int
@@ -58,7 +58,7 @@ $cshowsPrec :: Int -&gt; ShelleyOptions -&gt; ShowS
 -&gt; Double
 -&gt; Integer
 -&gt; TestnetOptions
-</span><a href="Testnet.Shelley.html#TestnetOptions"><span class="hs-identifier hs-var">TestnetOptions</span></a></span><span>
+</span><span class="hs-identifier hs-var">TestnetOptions</span></span><span>
 </span><span id="line-28"></span><span>  </span><span class="annot"><span class="annottext">(Int
  -&gt; Int
  -&gt; Double
@@ -107,8 +107,8 @@ forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>  </span><span class="annot"><span class="annottext">Int -&gt; Mod OptionFields Int
 forall (f :: * -&gt; *) a. HasValue f =&gt; a -&gt; Mod f a
 </span><span class="hs-identifier hs-var">OA.value</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TestnetOptions -&gt; Int
-</span><a href="Testnet.Shelley.html#numPraosNodes"><span class="hs-identifier hs-var hs-var">numPraosNodes</span></a></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
-</span><a href="Testnet.Shelley.html#defaultTestnetOptions"><span class="hs-identifier hs-var">defaultTestnetOptions</span></a></span><span class="hs-special">)</span><span>
+</span><span class="hs-identifier hs-var hs-var">numPraosNodes</span></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
+</span><span class="hs-identifier hs-var">defaultTestnetOptions</span></span><span class="hs-special">)</span><span>
 </span><span id="line-34"></span><span>      </span><span class="hs-special">)</span><span>
 </span><span id="line-35"></span><span>  </span><span class="annot"><span class="annottext">Parser
   (Int
@@ -152,8 +152,8 @@ forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>  </span><span class="annot"><span class="annottext">Int -&gt; Mod OptionFields Int
 forall (f :: * -&gt; *) a. HasValue f =&gt; a -&gt; Mod f a
 </span><span class="hs-identifier hs-var">OA.value</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TestnetOptions -&gt; Int
-</span><a href="Testnet.Shelley.html#numPoolNodes"><span class="hs-identifier hs-var hs-var">numPoolNodes</span></a></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
-</span><a href="Testnet.Shelley.html#defaultTestnetOptions"><span class="hs-identifier hs-var">defaultTestnetOptions</span></a></span><span class="hs-special">)</span><span>
+</span><span class="hs-identifier hs-var hs-var">numPoolNodes</span></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
+</span><span class="hs-identifier hs-var">defaultTestnetOptions</span></span><span class="hs-special">)</span><span>
 </span><span id="line-41"></span><span>      </span><span class="hs-special">)</span><span>
 </span><span id="line-42"></span><span>  </span><span class="annot"><span class="annottext">Parser
   (Double -&gt; Int -&gt; Int -&gt; Double -&gt; Integer -&gt; TestnetOptions)
@@ -195,8 +195,8 @@ forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>  </span><span class="annot"><span class="annottext">Double -&gt; Mod OptionFields Double
 forall (f :: * -&gt; *) a. HasValue f =&gt; a -&gt; Mod f a
 </span><span class="hs-identifier hs-var">OA.value</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TestnetOptions -&gt; Double
-</span><a href="Testnet.Shelley.html#activeSlotsCoeff"><span class="hs-identifier hs-var hs-var">activeSlotsCoeff</span></a></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
-</span><a href="Testnet.Shelley.html#defaultTestnetOptions"><span class="hs-identifier hs-var">defaultTestnetOptions</span></a></span><span class="hs-special">)</span><span>
+</span><span class="hs-identifier hs-var hs-var">activeSlotsCoeff</span></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
+</span><span class="hs-identifier hs-var">defaultTestnetOptions</span></span><span class="hs-special">)</span><span>
 </span><span id="line-48"></span><span>      </span><span class="hs-special">)</span><span>
 </span><span id="line-49"></span><span>  </span><span class="annot"><span class="annottext">Parser (Int -&gt; Int -&gt; Double -&gt; Integer -&gt; TestnetOptions)
 -&gt; Parser Int
@@ -237,8 +237,8 @@ forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>  </span><span class="annot"><span class="annottext">Int -&gt; Mod OptionFields Int
 forall (f :: * -&gt; *) a. HasValue f =&gt; a -&gt; Mod f a
 </span><span class="hs-identifier hs-var">OA.value</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TestnetOptions -&gt; Int
-</span><a href="Testnet.Shelley.html#securityParam"><span class="hs-identifier hs-var hs-var">securityParam</span></a></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
-</span><a href="Testnet.Shelley.html#defaultTestnetOptions"><span class="hs-identifier hs-var">defaultTestnetOptions</span></a></span><span class="hs-special">)</span><span>
+</span><span class="hs-identifier hs-var hs-var">securityParam</span></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
+</span><span class="hs-identifier hs-var">defaultTestnetOptions</span></span><span class="hs-special">)</span><span>
 </span><span id="line-55"></span><span>      </span><span class="hs-special">)</span><span>
 </span><span id="line-56"></span><span>  </span><span class="annot"><span class="annottext">Parser (Int -&gt; Double -&gt; Integer -&gt; TestnetOptions)
 -&gt; Parser Int -&gt; Parser (Double -&gt; Integer -&gt; TestnetOptions)
@@ -278,8 +278,8 @@ forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>  </span><span class="annot"><span class="annottext">Int -&gt; Mod OptionFields Int
 forall (f :: * -&gt; *) a. HasValue f =&gt; a -&gt; Mod f a
 </span><span class="hs-identifier hs-var">OA.value</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TestnetOptions -&gt; Int
-</span><a href="Testnet.Shelley.html#epochLength"><span class="hs-identifier hs-var hs-var">epochLength</span></a></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
-</span><a href="Testnet.Shelley.html#defaultTestnetOptions"><span class="hs-identifier hs-var">defaultTestnetOptions</span></a></span><span class="hs-special">)</span><span>
+</span><span class="hs-identifier hs-var hs-var">epochLength</span></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
+</span><span class="hs-identifier hs-var">defaultTestnetOptions</span></span><span class="hs-special">)</span><span>
 </span><span id="line-62"></span><span>      </span><span class="hs-special">)</span><span>
 </span><span id="line-63"></span><span>  </span><span class="annot"><span class="annottext">Parser (Double -&gt; Integer -&gt; TestnetOptions)
 -&gt; Parser Double -&gt; Parser (Integer -&gt; TestnetOptions)
@@ -319,8 +319,8 @@ forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>  </span><span class="annot"><span class="annottext">Double -&gt; Mod OptionFields Double
 forall (f :: * -&gt; *) a. HasValue f =&gt; a -&gt; Mod f a
 </span><span class="hs-identifier hs-var">OA.value</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TestnetOptions -&gt; Double
-</span><a href="Testnet.Shelley.html#slotLength"><span class="hs-identifier hs-var hs-var">slotLength</span></a></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
-</span><a href="Testnet.Shelley.html#defaultTestnetOptions"><span class="hs-identifier hs-var">defaultTestnetOptions</span></a></span><span class="hs-special">)</span><span>
+</span><span class="hs-identifier hs-var hs-var">slotLength</span></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
+</span><span class="hs-identifier hs-var">defaultTestnetOptions</span></span><span class="hs-special">)</span><span>
 </span><span id="line-69"></span><span>      </span><span class="hs-special">)</span><span>
 </span><span id="line-70"></span><span>  </span><span class="annot"><span class="annottext">Parser (Integer -&gt; TestnetOptions)
 -&gt; Parser Integer -&gt; Parser TestnetOptions
@@ -360,8 +360,8 @@ forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>  </span><span class="annot"><span class="annottext">Integer -&gt; Mod OptionFields Integer
 forall (f :: * -&gt; *) a. HasValue f =&gt; a -&gt; Mod f a
 </span><span class="hs-identifier hs-var">OA.value</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TestnetOptions -&gt; Integer
-</span><a href="Testnet.Shelley.html#maxLovelaceSupply"><span class="hs-identifier hs-var hs-var">maxLovelaceSupply</span></a></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
-</span><a href="Testnet.Shelley.html#defaultTestnetOptions"><span class="hs-identifier hs-var">defaultTestnetOptions</span></a></span><span class="hs-special">)</span><span>
+</span><span class="hs-identifier hs-var hs-var">maxLovelaceSupply</span></span><span> </span><span class="annot"><span class="annottext">TestnetOptions
+</span><span class="hs-identifier hs-var">defaultTestnetOptions</span></span><span class="hs-special">)</span><span>
 </span><span id="line-76"></span><span>      </span><span class="hs-special">)</span><span>
 </span><span id="line-77"></span><span>
 </span><span id="line-78"></span><span class="annot"><a href="Testnet.Commands.Shelley.html#optsShelley"><span class="hs-identifier hs-type">optsShelley</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><a href="Testnet.Commands.Shelley.html#ShelleyOptions"><span class="hs-identifier hs-type">ShelleyOptions</span></a></span><span>
@@ -407,19 +407,19 @@ forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f
 </span><span id="line-88"></span><span>
 </span><span id="line-89"></span><span class="annot"><a href="Testnet.Commands.Shelley.html#runShelleyOptions"><span class="hs-identifier hs-type">runShelleyOptions</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Testnet.Commands.Shelley.html#ShelleyOptions"><span class="hs-identifier hs-type">ShelleyOptions</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
 </span><span id="line-90"></span><span id="runShelleyOptions"><span class="annot"><span class="annottext">runShelleyOptions :: ShelleyOptions -&gt; IO ()
-</span><a href="Testnet.Commands.Shelley.html#runShelleyOptions"><span class="hs-identifier hs-var hs-var">runShelleyOptions</span></a></span></span><span> </span><span id="local-6989586621679094496"><span class="annot"><span class="annottext">ShelleyOptions
-</span><a href="#local-6989586621679094496"><span class="hs-identifier hs-var">options</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Int -&gt; (Conf -&gt; Integration [String]) -&gt; IO ()
+</span><a href="Testnet.Commands.Shelley.html#runShelleyOptions"><span class="hs-identifier hs-var hs-var">runShelleyOptions</span></a></span></span><span> </span><span id="local-6989586621679065810"><span class="annot"><span class="annottext">ShelleyOptions
+</span><a href="#local-6989586621679065810"><span class="hs-identifier hs-var">options</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Int -&gt; (Conf -&gt; Integration [String]) -&gt; IO ()
 forall a. Maybe Int -&gt; (Conf -&gt; Integration a) -&gt; IO ()
 </span><a href="Testnet.Run.html#runTestnet"><span class="hs-identifier hs-var">runTestnet</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ShelleyOptions -&gt; Maybe Int
 </span><a href="Testnet.Commands.Shelley.html#maybeTestnetMagic"><span class="hs-identifier hs-var hs-var">maybeTestnetMagic</span></a></span><span> </span><span class="annot"><span class="annottext">ShelleyOptions
-</span><a href="#local-6989586621679094496"><span class="hs-identifier hs-var">options</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((Conf -&gt; Integration [String]) -&gt; IO ())
+</span><a href="#local-6989586621679065810"><span class="hs-identifier hs-var">options</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((Conf -&gt; Integration [String]) -&gt; IO ())
 -&gt; (Conf -&gt; Integration [String]) -&gt; IO ()
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span>
 </span><span id="line-91"></span><span>  </span><span class="annot"><span class="annottext">TestnetOptions -&gt; Conf -&gt; Integration [String]
-</span><a href="Testnet.Shelley.html#testnet"><span class="hs-identifier hs-var">Testnet.Shelley.testnet</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ShelleyOptions -&gt; TestnetOptions
+</span><span class="hs-identifier hs-var">Testnet.Shelley.testnet</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ShelleyOptions -&gt; TestnetOptions
 </span><a href="Testnet.Commands.Shelley.html#testnetOptions"><span class="hs-identifier hs-var hs-var">testnetOptions</span></a></span><span> </span><span class="annot"><span class="annottext">ShelleyOptions
-</span><a href="#local-6989586621679094496"><span class="hs-identifier hs-var">options</span></a></span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679065810"><span class="hs-identifier hs-var">options</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-92"></span><span>
 </span><span id="line-93"></span><span class="annot"><a href="Testnet.Commands.Shelley.html#cmdShelley"><span class="hs-identifier hs-type">cmdShelley</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Mod</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">CommandFields</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-94"></span><span id="cmdShelley"><span class="annot"><span class="annottext">cmdShelley :: Mod CommandFields (IO ())

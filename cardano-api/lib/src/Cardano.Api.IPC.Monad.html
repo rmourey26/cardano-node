@@ -1,0 +1,947 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE DerivingVia #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE GeneralisedNewtypeDeriving #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Cardano.Api.IPC.Monad</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Cardano.Api.IPC.Monad.html#LocalStateQueryScript"><span class="hs-identifier">LocalStateQueryScript</span></a></span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Cardano.Api.IPC.Monad.html#sendMsgQuery"><span class="hs-identifier">sendMsgQuery</span></a></span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Cardano.Api.IPC.Monad.html#setupLocalStateQueryScript"><span class="hs-identifier">setupLocalStateQueryScript</span></a></span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Cardano.Api.Block.html"><span class="hs-identifier">Cardano.Api.Block</span></a></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Cardano.Api.IPC.html"><span class="hs-identifier">Cardano.Api.IPC</span></a></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Applicative</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Concurrent.STM</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.IO.Class</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Trans.Cont</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Either</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Function</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Maybe</span></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Ord</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Shelley.Spec.Ledger.Scripts</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.IO</span></span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Ouroboros.Network.Protocol.LocalStateQuery.Client</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Net.Query</span></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Ouroboros.Network.Protocol.LocalStateQuery.Type</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Net.Query</span></span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-comment">-- | Monadic type for constructing local state queries.</span><span>
+</span><span id="line-28"></span><span class="hs-comment">--</span><span>
+</span><span id="line-29"></span><span class="hs-comment">-- Use 'sendMsgQuery' in a do block to construct queries of this type and convert</span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- the expression to a 'Net.Query.LocalStateQueryClient' with 'setupLocalStateQueryScript'.</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">newtype</span><span> </span><span id="LocalStateQueryScript"><span class="annot"><a href="Cardano.Api.IPC.Monad.html#LocalStateQueryScript"><span class="hs-identifier hs-var">LocalStateQueryScript</span></a></span></span><span> </span><span id="local-6989586621679455545"><span class="annot"><a href="#local-6989586621679455545"><span class="hs-identifier hs-type">block</span></a></span></span><span> </span><span id="local-6989586621679455544"><span class="annot"><a href="#local-6989586621679455544"><span class="hs-identifier hs-type">point</span></a></span></span><span> </span><span id="local-6989586621679455543"><span class="annot"><a href="#local-6989586621679455543"><span class="hs-identifier hs-type">query</span></a></span></span><span> </span><span id="local-6989586621679455541"><span class="annot"><a href="#local-6989586621679455541"><span class="hs-identifier hs-type">r</span></a></span></span><span> </span><span id="local-6989586621679455542"><span class="annot"><a href="#local-6989586621679455542"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679455540"><span class="annot"><a href="#local-6989586621679455540"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="LocalStateQueryScript"><span class="annot"><a href="Cardano.Api.IPC.Monad.html#LocalStateQueryScript"><span class="hs-identifier hs-var">LocalStateQueryScript</span></a></span></span><span>
+</span><span id="line-32"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="runLocalStateQueryScript"><span class="annot"><span class="annottext">LocalStateQueryScript block point query r m a
+-&gt; ContT (ClientStAcquired block point query m r) m a
+</span><a href="Cardano.Api.IPC.Monad.html#runLocalStateQueryScript"><span class="hs-identifier hs-var hs-var">runLocalStateQueryScript</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ContT</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Net.Query.ClientStAcquired</span></span><span> </span><span class="annot"><a href="#local-6989586621679455545"><span class="hs-identifier hs-type">block</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455544"><span class="hs-identifier hs-type">point</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455543"><span class="hs-identifier hs-type">query</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455542"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455541"><span class="hs-identifier hs-type">r</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679455542"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455540"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679455469"><span id="local-6989586621679455471"><span class="annot"><span class="annottext">a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m a
+(a -&gt; b)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+(forall a b.
+ (a -&gt; b)
+ -&gt; LocalStateQueryScript block point query r m a
+ -&gt; LocalStateQueryScript block point query r m b)
+-&gt; (forall a b.
+    a
+    -&gt; LocalStateQueryScript block point query r m b
+    -&gt; LocalStateQueryScript block point query r m a)
+-&gt; Functor (LocalStateQueryScript block point query r m)
+forall a b.
+a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m a
+forall a b.
+(a -&gt; b)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m a
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+(a -&gt; b)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+forall (f :: * -&gt; *).
+(forall a b. (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b. a -&gt; f b -&gt; f a) -&gt; Functor f
+&lt;$ :: a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m a
+$c&lt;$ :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m a
+fmap :: (a -&gt; b)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+$cfmap :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+(a -&gt; b)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Functor</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679455457"><span id="local-6989586621679455459"><span id="local-6989586621679455461"><span id="local-6989586621679455463"><span id="local-6989586621679455465"><span class="annot"><span class="annottext">Functor (LocalStateQueryScript block point query r m)
+a -&gt; LocalStateQueryScript block point query r m a
+Functor (LocalStateQueryScript block point query r m)
+-&gt; (forall a. a -&gt; LocalStateQueryScript block point query r m a)
+-&gt; (forall a b.
+    LocalStateQueryScript block point query r m (a -&gt; b)
+    -&gt; LocalStateQueryScript block point query r m a
+    -&gt; LocalStateQueryScript block point query r m b)
+-&gt; (forall a b c.
+    (a -&gt; b -&gt; c)
+    -&gt; LocalStateQueryScript block point query r m a
+    -&gt; LocalStateQueryScript block point query r m b
+    -&gt; LocalStateQueryScript block point query r m c)
+-&gt; (forall a b.
+    LocalStateQueryScript block point query r m a
+    -&gt; LocalStateQueryScript block point query r m b
+    -&gt; LocalStateQueryScript block point query r m b)
+-&gt; (forall a b.
+    LocalStateQueryScript block point query r m a
+    -&gt; LocalStateQueryScript block point query r m b
+    -&gt; LocalStateQueryScript block point query r m a)
+-&gt; Applicative (LocalStateQueryScript block point query r m)
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m b
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m a
+LocalStateQueryScript block point query r m (a -&gt; b)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+(a -&gt; b -&gt; c)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m c
+forall a. a -&gt; LocalStateQueryScript block point query r m a
+forall a b.
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m a
+forall a b.
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m b
+forall a b.
+LocalStateQueryScript block point query r m (a -&gt; b)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+forall a b c.
+(a -&gt; b -&gt; c)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m c
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *).
+Functor (LocalStateQueryScript block point query r m)
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a.
+a -&gt; LocalStateQueryScript block point query r m a
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m a
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m b
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+LocalStateQueryScript block point query r m (a -&gt; b)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b c.
+(a -&gt; b -&gt; c)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m c
+forall (f :: * -&gt; *).
+Functor f
+-&gt; (forall a. a -&gt; f a)
+-&gt; (forall a b. f (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b c. (a -&gt; b -&gt; c) -&gt; f a -&gt; f b -&gt; f c)
+-&gt; (forall a b. f a -&gt; f b -&gt; f b)
+-&gt; (forall a b. f a -&gt; f b -&gt; f a)
+-&gt; Applicative f
+&lt;* :: LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m a
+$c&lt;* :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m a
+*&gt; :: LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m b
+$c*&gt; :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m b
+liftA2 :: (a -&gt; b -&gt; c)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m c
+$cliftA2 :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b c.
+(a -&gt; b -&gt; c)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m c
+&lt;*&gt; :: LocalStateQueryScript block point query r m (a -&gt; b)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+$c&lt;*&gt; :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+LocalStateQueryScript block point query r m (a -&gt; b)
+-&gt; LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+pure :: a -&gt; LocalStateQueryScript block point query r m a
+$cpure :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a.
+a -&gt; LocalStateQueryScript block point query r m a
+$cp1Applicative :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *).
+Functor (LocalStateQueryScript block point query r m)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Applicative</span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679455449"><span id="local-6989586621679455451"><span id="local-6989586621679455453"><span class="annot"><span class="annottext">Applicative (LocalStateQueryScript block point query r m)
+a -&gt; LocalStateQueryScript block point query r m a
+Applicative (LocalStateQueryScript block point query r m)
+-&gt; (forall a b.
+    LocalStateQueryScript block point query r m a
+    -&gt; (a -&gt; LocalStateQueryScript block point query r m b)
+    -&gt; LocalStateQueryScript block point query r m b)
+-&gt; (forall a b.
+    LocalStateQueryScript block point query r m a
+    -&gt; LocalStateQueryScript block point query r m b
+    -&gt; LocalStateQueryScript block point query r m b)
+-&gt; (forall a. a -&gt; LocalStateQueryScript block point query r m a)
+-&gt; Monad (LocalStateQueryScript block point query r m)
+LocalStateQueryScript block point query r m a
+-&gt; (a -&gt; LocalStateQueryScript block point query r m b)
+-&gt; LocalStateQueryScript block point query r m b
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m b
+forall a. a -&gt; LocalStateQueryScript block point query r m a
+forall a b.
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m b
+forall a b.
+LocalStateQueryScript block point query r m a
+-&gt; (a -&gt; LocalStateQueryScript block point query r m b)
+-&gt; LocalStateQueryScript block point query r m b
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *).
+Applicative (LocalStateQueryScript block point query r m)
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a.
+a -&gt; LocalStateQueryScript block point query r m a
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m b
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+LocalStateQueryScript block point query r m a
+-&gt; (a -&gt; LocalStateQueryScript block point query r m b)
+-&gt; LocalStateQueryScript block point query r m b
+forall (m :: * -&gt; *).
+Applicative m
+-&gt; (forall a b. m a -&gt; (a -&gt; m b) -&gt; m b)
+-&gt; (forall a b. m a -&gt; m b -&gt; m b)
+-&gt; (forall a. a -&gt; m a)
+-&gt; Monad m
+return :: a -&gt; LocalStateQueryScript block point query r m a
+$creturn :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a.
+a -&gt; LocalStateQueryScript block point query r m a
+&gt;&gt; :: LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m b
+$c&gt;&gt; :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+LocalStateQueryScript block point query r m a
+-&gt; LocalStateQueryScript block point query r m b
+-&gt; LocalStateQueryScript block point query r m b
+&gt;&gt;= :: LocalStateQueryScript block point query r m a
+-&gt; (a -&gt; LocalStateQueryScript block point query r m b)
+-&gt; LocalStateQueryScript block point query r m b
+$c&gt;&gt;= :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a b.
+LocalStateQueryScript block point query r m a
+-&gt; (a -&gt; LocalStateQueryScript block point query r m b)
+-&gt; LocalStateQueryScript block point query r m b
+$cp1Monad :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *).
+Applicative (LocalStateQueryScript block point query r m)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Monad</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679455445"><span class="annot"><span class="annottext">Monad (LocalStateQueryScript block point query r m)
+Monad (LocalStateQueryScript block point query r m)
+-&gt; (forall a.
+    IO a -&gt; LocalStateQueryScript block point query r m a)
+-&gt; MonadIO (LocalStateQueryScript block point query r m)
+IO a -&gt; LocalStateQueryScript block point query r m a
+forall a. IO a -&gt; LocalStateQueryScript block point query r m a
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *).
+MonadIO m =&gt;
+Monad (LocalStateQueryScript block point query r m)
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a.
+MonadIO m =&gt;
+IO a -&gt; LocalStateQueryScript block point query r m a
+forall (m :: * -&gt; *).
+Monad m -&gt; (forall a. IO a -&gt; m a) -&gt; MonadIO m
+liftIO :: IO a -&gt; LocalStateQueryScript block point query r m a
+$cliftIO :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a.
+MonadIO m =&gt;
+IO a -&gt; LocalStateQueryScript block point query r m a
+$cp1MonadIO :: forall block point (query :: * -&gt; *) r (m :: * -&gt; *).
+MonadIO m =&gt;
+Monad (LocalStateQueryScript block point query r m)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadIO</span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- | Use 'sendMsgQuery' in a do block to construct monadic local state queries.</span><span>
+</span><span id="line-36"></span><span id="local-6989586621679455438"><span id="local-6989586621679455439"><span id="local-6989586621679455440"><span id="local-6989586621679455441"><span id="local-6989586621679455442"><span id="local-6989586621679455443"><span class="annot"><a href="Cardano.Api.IPC.Monad.html#sendMsgQuery"><span class="hs-identifier hs-type">sendMsgQuery</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679455443"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679455442"><span class="hs-identifier hs-type">query</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455441"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Cardano.Api.IPC.Monad.html#LocalStateQueryScript"><span class="hs-identifier hs-type">LocalStateQueryScript</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455440"><span class="hs-identifier hs-type">block</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455439"><span class="hs-identifier hs-type">point</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455442"><span class="hs-identifier hs-type">query</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455438"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455443"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455441"><span class="hs-identifier hs-type">a</span></a></span></span></span></span></span></span></span><span>
+</span><span id="line-37"></span><span id="sendMsgQuery"><span class="annot"><span class="annottext">sendMsgQuery :: query a -&gt; LocalStateQueryScript block point query r m a
+</span><a href="Cardano.Api.IPC.Monad.html#sendMsgQuery"><span class="hs-identifier hs-var hs-var">sendMsgQuery</span></a></span></span><span> </span><span id="local-6989586621679455437"><span class="annot"><span class="annottext">query a
+</span><a href="#local-6989586621679455437"><span class="hs-identifier hs-var">q</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ContT (ClientStAcquired block point query m r) m a
+-&gt; LocalStateQueryScript block point query r m a
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a.
+ContT (ClientStAcquired block point query m r) m a
+-&gt; LocalStateQueryScript block point query r m a
+</span><a href="Cardano.Api.IPC.Monad.html#LocalStateQueryScript"><span class="hs-identifier hs-var">LocalStateQueryScript</span></a></span><span> </span><span class="annot"><span class="annottext">(ContT (ClientStAcquired block point query m r) m a
+ -&gt; LocalStateQueryScript block point query r m a)
+-&gt; (((a -&gt; m (ClientStAcquired block point query m r))
+     -&gt; m (ClientStAcquired block point query m r))
+    -&gt; ContT (ClientStAcquired block point query m r) m a)
+-&gt; ((a -&gt; m (ClientStAcquired block point query m r))
+    -&gt; m (ClientStAcquired block point query m r))
+-&gt; LocalStateQueryScript block point query r m a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">((a -&gt; m (ClientStAcquired block point query m r))
+ -&gt; m (ClientStAcquired block point query m r))
+-&gt; ContT (ClientStAcquired block point query m r) m a
+forall k (r :: k) (m :: k -&gt; *) a.
+((a -&gt; m r) -&gt; m r) -&gt; ContT r m a
+</span><span class="hs-identifier hs-var">ContT</span></span><span> </span><span class="annot"><span class="annottext">(((a -&gt; m (ClientStAcquired block point query m r))
+  -&gt; m (ClientStAcquired block point query m r))
+ -&gt; LocalStateQueryScript block point query r m a)
+-&gt; ((a -&gt; m (ClientStAcquired block point query m r))
+    -&gt; m (ClientStAcquired block point query m r))
+-&gt; LocalStateQueryScript block point query r m a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679455434"><span class="annot"><span class="annottext">a -&gt; m (ClientStAcquired block point query m r)
+</span><a href="#local-6989586621679455434"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ClientStAcquired block point query m r
+-&gt; m (ClientStAcquired block point query m r)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(ClientStAcquired block point query m r
+ -&gt; m (ClientStAcquired block point query m r))
+-&gt; ClientStAcquired block point query m r
+-&gt; m (ClientStAcquired block point query m r)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-38"></span><span>  </span><span class="annot"><span class="annottext">query a
+-&gt; ClientStQuerying block point query m r a
+-&gt; ClientStAcquired block point query m r
+forall (query :: * -&gt; *) result block point (m :: * -&gt; *) a.
+query result
+-&gt; ClientStQuerying block point query m a result
+-&gt; ClientStAcquired block point query m a
+</span><span class="hs-identifier hs-var">Net.Query.SendMsgQuery</span></span><span> </span><span class="annot"><span class="annottext">query a
+</span><a href="#local-6989586621679455437"><span class="hs-identifier hs-var">q</span></a></span><span> </span><span class="annot"><span class="annottext">(ClientStQuerying block point query m r a
+ -&gt; ClientStAcquired block point query m r)
+-&gt; ClientStQuerying block point query m r a
+-&gt; ClientStAcquired block point query m r
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-39"></span><span>    </span><span class="annot"><span class="annottext">ClientStQuerying :: forall block point (query :: * -&gt; *) (m :: * -&gt; *) a result.
+(result -&gt; m (ClientStAcquired block point query m a))
+-&gt; ClientStQuerying block point query m a result
+</span><span class="hs-identifier hs-type">Net.Query.ClientStQuerying</span></span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">recvMsgResult :: a -&gt; m (ClientStAcquired block point query m r)
+</span><span class="hs-identifier hs-var">Net.Query.recvMsgResult</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; m (ClientStAcquired block point query m r)
+</span><a href="#local-6989586621679455434"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- | Use 'sendMsgQuery' in a do block to construct monadic local state queries.</span><span>
+</span><span id="line-44"></span><span id="local-6989586621679455429"><span id="local-6989586621679455430"><span class="annot"><a href="Cardano.Api.IPC.Monad.html#setupLocalStateQueryScript"><span class="hs-identifier hs-type">setupLocalStateQueryScript</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-45"></span><span>     </span><span class="annot"><span class="hs-identifier hs-type">STM</span></span><span> </span><span class="annot"><a href="#local-6989586621679455430"><span class="hs-identifier hs-type">x</span></a></span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Cardano.Api.Block.html#ChainPoint"><span class="hs-identifier hs-type">ChainPoint</span></a></span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">NodeToClientVersion</span></span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TMVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Net.Query.AcquireFailure</span></span><span> </span><span class="annot"><a href="#local-6989586621679455429"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Cardano.Api.IPC.Monad.html#LocalStateQueryScript"><span class="hs-identifier hs-type">LocalStateQueryScript</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Cardano.Api.Block.html#BlockInMode"><span class="hs-identifier hs-type">BlockInMode</span></a></span><span> </span><span class="annot"><a href="Cardano.Api.Modes.html#CardanoMode"><span class="hs-identifier hs-type">CardanoMode</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="Cardano.Api.Block.html#ChainPoint"><span class="hs-identifier hs-type">ChainPoint</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Cardano.Api.Query.html#QueryInMode"><span class="hs-identifier hs-type">QueryInMode</span></a></span><span> </span><span class="annot"><a href="Cardano.Api.Modes.html#CardanoMode"><span class="hs-identifier hs-type">CardanoMode</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679455429"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-50"></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Net.Query.LocalStateQueryClient</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Cardano.Api.Block.html#BlockInMode"><span class="hs-identifier hs-type">BlockInMode</span></a></span><span> </span><span class="annot"><a href="Cardano.Api.Modes.html#CardanoMode"><span class="hs-identifier hs-type">CardanoMode</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="Cardano.Api.Block.html#ChainPoint"><span class="hs-identifier hs-type">ChainPoint</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Cardano.Api.Query.html#QueryInMode"><span class="hs-identifier hs-type">QueryInMode</span></a></span><span> </span><span class="annot"><a href="Cardano.Api.Modes.html#CardanoMode"><span class="hs-identifier hs-type">CardanoMode</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-51"></span><span id="setupLocalStateQueryScript"><span class="annot"><span class="annottext">setupLocalStateQueryScript :: STM x
+-&gt; Maybe ChainPoint
+-&gt; NodeToClientVersion
+-&gt; TMVar (Maybe (Either AcquireFailure a))
+-&gt; LocalStateQueryScript
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     ()
+     IO
+     a
+-&gt; LocalStateQueryClient
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+</span><a href="Cardano.Api.IPC.Monad.html#setupLocalStateQueryScript"><span class="hs-identifier hs-var hs-var">setupLocalStateQueryScript</span></a></span></span><span> </span><span id="local-6989586621679455428"><span class="annot"><span class="annottext">STM x
+</span><a href="#local-6989586621679455428"><span class="hs-identifier hs-var">waitDone</span></a></span></span><span> </span><span id="local-6989586621679455427"><span class="annot"><span class="annottext">Maybe ChainPoint
+</span><a href="#local-6989586621679455427"><span class="hs-identifier hs-var">mPointVar'</span></a></span></span><span> </span><span id="local-6989586621679455426"><span class="annot"><span class="annottext">NodeToClientVersion
+</span><a href="#local-6989586621679455426"><span class="hs-identifier hs-var">ntcVersion</span></a></span></span><span> </span><span id="local-6989586621679455425"><span class="annot"><span class="annottext">TMVar (Maybe (Either AcquireFailure a))
+</span><a href="#local-6989586621679455425"><span class="hs-identifier hs-var">resultVar'</span></a></span></span><span> </span><span id="local-6989586621679455424"><span class="annot"><span class="annottext">LocalStateQueryScript
+  (BlockInMode CardanoMode)
+  ChainPoint
+  (QueryInMode CardanoMode)
+  ()
+  IO
+  a
+</span><a href="#local-6989586621679455424"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-52"></span><span>  </span><span class="annot"><span class="annottext">IO
+  (ClientStIdle
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ())
+-&gt; LocalStateQueryClient
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+forall block point (query :: * -&gt; *) (m :: * -&gt; *) a.
+m (ClientStIdle block point query m a)
+-&gt; LocalStateQueryClient block point query m a
+</span><span class="hs-identifier hs-var">LocalStateQueryClient</span></span><span> </span><span class="annot"><span class="annottext">(IO
+   (ClientStIdle
+      (BlockInMode CardanoMode)
+      ChainPoint
+      (QueryInMode CardanoMode)
+      IO
+      ())
+ -&gt; LocalStateQueryClient
+      (BlockInMode CardanoMode)
+      ChainPoint
+      (QueryInMode CardanoMode)
+      IO
+      ())
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+-&gt; LocalStateQueryClient
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">NodeToClientVersion
+</span><a href="#local-6989586621679455426"><span class="hs-identifier hs-var">ntcVersion</span></a></span><span> </span><span class="annot"><span class="annottext">NodeToClientVersion -&gt; NodeToClientVersion -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">NodeToClientVersion
+</span><span class="hs-identifier hs-var">NodeToClientV_8</span></span><span>
+</span><span id="line-54"></span><span>      </span><span class="hs-keyword">then</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-55"></span><span>        </span><span class="annot"><span class="annottext">ClientStIdle
+  (BlockInMode CardanoMode)
+  ChainPoint
+  (QueryInMode CardanoMode)
+  IO
+  ()
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(ClientStIdle
+   (BlockInMode CardanoMode)
+   ChainPoint
+   (QueryInMode CardanoMode)
+   IO
+   ()
+ -&gt; IO
+      (ClientStIdle
+         (BlockInMode CardanoMode)
+         ChainPoint
+         (QueryInMode CardanoMode)
+         IO
+         ()))
+-&gt; (ClientStAcquiring
+      (BlockInMode CardanoMode)
+      ChainPoint
+      (QueryInMode CardanoMode)
+      IO
+      ()
+    -&gt; ClientStIdle
+         (BlockInMode CardanoMode)
+         ChainPoint
+         (QueryInMode CardanoMode)
+         IO
+         ())
+-&gt; ClientStAcquiring
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Maybe ChainPoint
+-&gt; ClientStAcquiring
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+-&gt; ClientStIdle
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+forall point block (query :: * -&gt; *) (m :: * -&gt; *) a.
+Maybe point
+-&gt; ClientStAcquiring block point query m a
+-&gt; ClientStIdle block point query m a
+</span><span class="hs-identifier hs-var">Net.Query.SendMsgAcquire</span></span><span> </span><span class="annot"><span class="annottext">Maybe ChainPoint
+</span><a href="#local-6989586621679455427"><span class="hs-identifier hs-var">mPointVar'</span></a></span><span> </span><span class="annot"><span class="annottext">(ClientStAcquiring
+   (BlockInMode CardanoMode)
+   ChainPoint
+   (QueryInMode CardanoMode)
+   IO
+   ()
+ -&gt; IO
+      (ClientStIdle
+         (BlockInMode CardanoMode)
+         ChainPoint
+         (QueryInMode CardanoMode)
+         IO
+         ()))
+-&gt; ClientStAcquiring
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-56"></span><span>          </span><span class="annot"><span class="annottext">ClientStAcquiring :: forall block point (query :: * -&gt; *) (m :: * -&gt; *) a.
+m (ClientStAcquired block point query m a)
+-&gt; (AcquireFailure -&gt; m (ClientStIdle block point query m a))
+-&gt; ClientStAcquiring block point query m a
+</span><span class="hs-identifier hs-type">Net.Query.ClientStAcquiring</span></span><span>
+</span><span id="line-57"></span><span>          </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">recvMsgAcquired :: IO
+  (ClientStAcquired
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ())
+</span><span class="hs-identifier hs-var">Net.Query.recvMsgAcquired</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ContT
+  (ClientStAcquired
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ())
+  IO
+  a
+-&gt; (a
+    -&gt; IO
+         (ClientStAcquired
+            (BlockInMode CardanoMode)
+            ChainPoint
+            (QueryInMode CardanoMode)
+            IO
+            ()))
+-&gt; IO
+     (ClientStAcquired
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall k (r :: k) (m :: k -&gt; *) a. ContT r m a -&gt; (a -&gt; m r) -&gt; m r
+</span><span class="hs-identifier hs-var hs-var">runContT</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LocalStateQueryScript
+  (BlockInMode CardanoMode)
+  ChainPoint
+  (QueryInMode CardanoMode)
+  ()
+  IO
+  a
+-&gt; ContT
+     (ClientStAcquired
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+     IO
+     a
+forall block point (query :: * -&gt; *) r (m :: * -&gt; *) a.
+LocalStateQueryScript block point query r m a
+-&gt; ContT (ClientStAcquired block point query m r) m a
+</span><a href="Cardano.Api.IPC.Monad.html#runLocalStateQueryScript"><span class="hs-identifier hs-var hs-var">runLocalStateQueryScript</span></a></span><span> </span><span class="annot"><span class="annottext">LocalStateQueryScript
+  (BlockInMode CardanoMode)
+  ChainPoint
+  (QueryInMode CardanoMode)
+  ()
+  IO
+  a
+</span><a href="#local-6989586621679455424"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((a
+  -&gt; IO
+       (ClientStAcquired
+          (BlockInMode CardanoMode)
+          ChainPoint
+          (QueryInMode CardanoMode)
+          IO
+          ()))
+ -&gt; IO
+      (ClientStAcquired
+         (BlockInMode CardanoMode)
+         ChainPoint
+         (QueryInMode CardanoMode)
+         IO
+         ()))
+-&gt; (a
+    -&gt; IO
+         (ClientStAcquired
+            (BlockInMode CardanoMode)
+            ChainPoint
+            (QueryInMode CardanoMode)
+            IO
+            ()))
+-&gt; IO
+     (ClientStAcquired
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679455417"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679455417"><span class="hs-identifier hs-var">result</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-58"></span><span>              </span><span class="annot"><span class="annottext">STM () -&gt; IO ()
+forall a. STM a -&gt; IO a
+</span><span class="hs-identifier hs-var">atomically</span></span><span> </span><span class="annot"><span class="annottext">(STM () -&gt; IO ()) -&gt; STM () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">TMVar (Maybe (Either AcquireFailure a))
+-&gt; Maybe (Either AcquireFailure a) -&gt; STM ()
+forall a. TMVar a -&gt; a -&gt; STM ()
+</span><span class="hs-identifier hs-var">putTMVar</span></span><span> </span><span class="annot"><span class="annottext">TMVar (Maybe (Either AcquireFailure a))
+</span><a href="#local-6989586621679455425"><span class="hs-identifier hs-var">resultVar'</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Either AcquireFailure a -&gt; Maybe (Either AcquireFailure a)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; Either AcquireFailure a
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679455417"><span class="hs-identifier hs-var">result</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>              </span><span class="annot"><span class="annottext">IO x -&gt; IO ()
+forall (f :: * -&gt; *) a. Functor f =&gt; f a -&gt; f ()
+</span><span class="hs-identifier hs-var">void</span></span><span> </span><span class="annot"><span class="annottext">(IO x -&gt; IO ()) -&gt; IO x -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">STM x -&gt; IO x
+forall a. STM a -&gt; IO a
+</span><span class="hs-identifier hs-var">atomically</span></span><span> </span><span class="annot"><span class="annottext">STM x
+</span><a href="#local-6989586621679455428"><span class="hs-identifier hs-var">waitDone</span></a></span><span>
+</span><span id="line-60"></span><span>              </span><span class="annot"><span class="annottext">ClientStAcquired
+  (BlockInMode CardanoMode)
+  ChainPoint
+  (QueryInMode CardanoMode)
+  IO
+  ()
+-&gt; IO
+     (ClientStAcquired
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(ClientStAcquired
+   (BlockInMode CardanoMode)
+   ChainPoint
+   (QueryInMode CardanoMode)
+   IO
+   ()
+ -&gt; IO
+      (ClientStAcquired
+         (BlockInMode CardanoMode)
+         ChainPoint
+         (QueryInMode CardanoMode)
+         IO
+         ()))
+-&gt; ClientStAcquired
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+-&gt; IO
+     (ClientStAcquired
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IO
+  (ClientStIdle
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ())
+-&gt; ClientStAcquired
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+forall (m :: * -&gt; *) block point (query :: * -&gt; *) a.
+m (ClientStIdle block point query m a)
+-&gt; ClientStAcquired block point query m a
+</span><span class="hs-identifier hs-var">Net.Query.SendMsgRelease</span></span><span> </span><span class="annot"><span class="annottext">(IO
+   (ClientStIdle
+      (BlockInMode CardanoMode)
+      ChainPoint
+      (QueryInMode CardanoMode)
+      IO
+      ())
+ -&gt; ClientStAcquired
+      (BlockInMode CardanoMode)
+      ChainPoint
+      (QueryInMode CardanoMode)
+      IO
+      ())
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+-&gt; ClientStAcquired
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ClientStIdle
+  (BlockInMode CardanoMode)
+  ChainPoint
+  (QueryInMode CardanoMode)
+  IO
+  ()
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(ClientStIdle
+   (BlockInMode CardanoMode)
+   ChainPoint
+   (QueryInMode CardanoMode)
+   IO
+   ()
+ -&gt; IO
+      (ClientStIdle
+         (BlockInMode CardanoMode)
+         ChainPoint
+         (QueryInMode CardanoMode)
+         IO
+         ()))
+-&gt; ClientStIdle
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">()
+-&gt; ClientStIdle
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+forall a block point (query :: * -&gt; *) (m :: * -&gt; *).
+a -&gt; ClientStIdle block point query m a
+</span><span class="hs-identifier hs-var">Net.Query.SendMsgDone</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span>          </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">recvMsgFailure :: AcquireFailure
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+</span><span class="hs-identifier hs-var">Net.Query.recvMsgFailure</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679455410"><span class="annot"><span class="annottext">AcquireFailure
+</span><a href="#local-6989586621679455410"><span class="hs-identifier hs-var">failure</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-63"></span><span>              </span><span class="annot"><span class="annottext">STM () -&gt; IO ()
+forall a. STM a -&gt; IO a
+</span><span class="hs-identifier hs-var">atomically</span></span><span> </span><span class="annot"><span class="annottext">(STM () -&gt; IO ()) -&gt; STM () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">TMVar (Maybe (Either AcquireFailure a))
+-&gt; Maybe (Either AcquireFailure a) -&gt; STM ()
+forall a. TMVar a -&gt; a -&gt; STM ()
+</span><span class="hs-identifier hs-var">putTMVar</span></span><span> </span><span class="annot"><span class="annottext">TMVar (Maybe (Either AcquireFailure a))
+</span><a href="#local-6989586621679455425"><span class="hs-identifier hs-var">resultVar'</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Either AcquireFailure a -&gt; Maybe (Either AcquireFailure a)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">AcquireFailure -&gt; Either AcquireFailure a
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">AcquireFailure
+</span><a href="#local-6989586621679455410"><span class="hs-identifier hs-var">failure</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span>              </span><span class="annot"><span class="annottext">IO x -&gt; IO ()
+forall (f :: * -&gt; *) a. Functor f =&gt; f a -&gt; f ()
+</span><span class="hs-identifier hs-var">void</span></span><span> </span><span class="annot"><span class="annottext">(IO x -&gt; IO ()) -&gt; IO x -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">STM x -&gt; IO x
+forall a. STM a -&gt; IO a
+</span><span class="hs-identifier hs-var">atomically</span></span><span> </span><span class="annot"><span class="annottext">STM x
+</span><a href="#local-6989586621679455428"><span class="hs-identifier hs-var">waitDone</span></a></span><span>
+</span><span id="line-65"></span><span>              </span><span class="annot"><span class="annottext">ClientStIdle
+  (BlockInMode CardanoMode)
+  ChainPoint
+  (QueryInMode CardanoMode)
+  IO
+  ()
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(ClientStIdle
+   (BlockInMode CardanoMode)
+   ChainPoint
+   (QueryInMode CardanoMode)
+   IO
+   ()
+ -&gt; IO
+      (ClientStIdle
+         (BlockInMode CardanoMode)
+         ChainPoint
+         (QueryInMode CardanoMode)
+         IO
+         ()))
+-&gt; ClientStIdle
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">()
+-&gt; ClientStIdle
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+forall a block point (query :: * -&gt; *) (m :: * -&gt; *).
+a -&gt; ClientStIdle block point query m a
+</span><span class="hs-identifier hs-var">Net.Query.SendMsgDone</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>          </span><span class="hs-special">}</span><span>
+</span><span id="line-67"></span><span>      </span><span class="hs-keyword">else</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-68"></span><span>        </span><span class="annot"><span class="annottext">STM () -&gt; IO ()
+forall a. STM a -&gt; IO a
+</span><span class="hs-identifier hs-var">atomically</span></span><span> </span><span class="annot"><span class="annottext">(STM () -&gt; IO ()) -&gt; STM () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">TMVar (Maybe (Either AcquireFailure a))
+-&gt; Maybe (Either AcquireFailure a) -&gt; STM ()
+forall a. TMVar a -&gt; a -&gt; STM ()
+</span><span class="hs-identifier hs-var">putTMVar</span></span><span> </span><span class="annot"><span class="annottext">TMVar (Maybe (Either AcquireFailure a))
+</span><a href="#local-6989586621679455425"><span class="hs-identifier hs-var">resultVar'</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (Either AcquireFailure a)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-69"></span><span>        </span><span class="annot"><span class="annottext">IO x -&gt; IO ()
+forall (f :: * -&gt; *) a. Functor f =&gt; f a -&gt; f ()
+</span><span class="hs-identifier hs-var">void</span></span><span> </span><span class="annot"><span class="annottext">(IO x -&gt; IO ()) -&gt; IO x -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">STM x -&gt; IO x
+forall a. STM a -&gt; IO a
+</span><span class="hs-identifier hs-var">atomically</span></span><span> </span><span class="annot"><span class="annottext">STM x
+</span><a href="#local-6989586621679455428"><span class="hs-identifier hs-var">waitDone</span></a></span><span>
+</span><span id="line-70"></span><span>        </span><span class="annot"><span class="annottext">ClientStIdle
+  (BlockInMode CardanoMode)
+  ChainPoint
+  (QueryInMode CardanoMode)
+  IO
+  ()
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(ClientStIdle
+   (BlockInMode CardanoMode)
+   ChainPoint
+   (QueryInMode CardanoMode)
+   IO
+   ()
+ -&gt; IO
+      (ClientStIdle
+         (BlockInMode CardanoMode)
+         ChainPoint
+         (QueryInMode CardanoMode)
+         IO
+         ()))
+-&gt; ClientStIdle
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+-&gt; IO
+     (ClientStIdle
+        (BlockInMode CardanoMode)
+        ChainPoint
+        (QueryInMode CardanoMode)
+        IO
+        ())
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">()
+-&gt; ClientStIdle
+     (BlockInMode CardanoMode)
+     ChainPoint
+     (QueryInMode CardanoMode)
+     IO
+     ()
+forall a block point (query :: * -&gt; *) (m :: * -&gt; *).
+a -&gt; ClientStIdle block point query m a
+</span><span class="hs-identifier hs-var">Net.Query.SendMsgDone</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-71"></span></pre></body></html>

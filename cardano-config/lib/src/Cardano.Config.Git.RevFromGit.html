@@ -24,17 +24,17 @@ forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
 </span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">IO String -&gt; Q String
 forall a. IO a -&gt; Q a
 </span><span class="hs-identifier hs-var">TH.runIO</span></span><span> </span><span class="annot"><span class="annottext">IO String
-</span><a href="#local-6989586621679048261"><span class="hs-identifier hs-var">runGitRevParse</span></a></span><span>
+</span><a href="#local-6989586621679048313"><span class="hs-identifier hs-var">runGitRevParse</span></a></span><span>
 </span><span id="line-16"></span><span>    </span><span class="hs-keyword">where</span><span>
-</span><span id="line-17"></span><span>        </span><span class="annot"><a href="#local-6989586621679048261"><span class="hs-identifier hs-type">runGitRevParse</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
-</span><span id="line-18"></span><span>        </span><span id="local-6989586621679048261"><span class="annot"><span class="annottext">runGitRevParse :: IO String
-</span><a href="#local-6989586621679048261"><span class="hs-identifier hs-var hs-var">runGitRevParse</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(IOError -&gt; Maybe ())
+</span><span id="line-17"></span><span>        </span><span class="annot"><a href="#local-6989586621679048313"><span class="hs-identifier hs-type">runGitRevParse</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-18"></span><span>        </span><span id="local-6989586621679048313"><span class="annot"><span class="annottext">runGitRevParse :: IO String
+</span><a href="#local-6989586621679048313"><span class="hs-identifier hs-var hs-var">runGitRevParse</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(IOError -&gt; Maybe ())
 -&gt; (() -&gt; IO String) -&gt; IO String -&gt; IO String
 forall e b a.
 Exception e =&gt;
 (e -&gt; Maybe b) -&gt; (b -&gt; IO a) -&gt; IO a -&gt; IO a
 </span><span class="hs-identifier hs-var">handleJust</span></span><span> </span><span class="annot"><span class="annottext">IOError -&gt; Maybe ()
-</span><a href="#local-6989586621679048259"><span class="hs-identifier hs-var">missingGit</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IO String -&gt; () -&gt; IO String
+</span><a href="#local-6989586621679048311"><span class="hs-identifier hs-var">missingGit</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IO String -&gt; () -&gt; IO String
 forall a b. a -&gt; b -&gt; a
 </span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="annot"><span class="annottext">(IO String -&gt; () -&gt; IO String) -&gt; IO String -&gt; () -&gt; IO String
 forall a b. (a -&gt; b) -&gt; a -&gt; b
@@ -44,9 +44,9 @@ forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(IO String -&gt; IO String) -&gt; IO String -&gt; IO String
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-19"></span><span>            </span><span class="hs-special">(</span><span id="local-6989586621679048257"><span class="annot"><span class="annottext">ExitCode
-</span><a href="#local-6989586621679048257"><span class="hs-identifier hs-var">exitCode</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679048256"><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679048256"><span class="hs-identifier hs-var">output</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span id="line-19"></span><span>            </span><span class="hs-special">(</span><span id="local-6989586621679048309"><span class="annot"><span class="annottext">ExitCode
+</span><a href="#local-6989586621679048309"><span class="hs-identifier hs-var">exitCode</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679048308"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679048308"><span class="hs-identifier hs-var">output</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
 </span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span>
 </span><span id="line-20"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; [String] -&gt; String -&gt; IO (ExitCode, String, String)
 </span><span class="hs-identifier hs-var">readProcessWithExitCode</span></span><span> </span><span class="annot"><span class="annottext">String
@@ -60,20 +60,20 @@ forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO String) -&gt; String -&gt; IO String
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">ExitCode
-</span><a href="#local-6989586621679048257"><span class="hs-identifier hs-var">exitCode</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><a href="#local-6989586621679048309"><span class="hs-identifier hs-var">exitCode</span></a></span><span> </span><span class="hs-keyword">of</span><span>
 </span><span id="line-22"></span><span>                </span><span class="annot"><span class="annottext">ExitCode
 </span><span class="hs-identifier hs-var">ExitSuccess</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679048256"><span class="hs-identifier hs-var">output</span></a></span><span>
+</span><a href="#local-6989586621679048308"><span class="hs-identifier hs-var">output</span></a></span><span>
 </span><span id="line-23"></span><span>                </span><span class="annot"><span class="annottext">ExitCode
 </span><span class="hs-identifier">_</span></span><span>           </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String
 </span><span class="hs-string">&quot;&quot;</span></span><span>
 </span><span id="line-24"></span><span>
-</span><span id="line-25"></span><span>        </span><span id="local-6989586621679048259"><span class="annot"><span class="annottext">missingGit :: IOError -&gt; Maybe ()
-</span><a href="#local-6989586621679048259"><span class="hs-identifier hs-var hs-var">missingGit</span></a></span></span><span> </span><span id="local-6989586621679048254"><span class="annot"><span class="annottext">IOError
-</span><a href="#local-6989586621679048254"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">IOErrorType -&gt; Bool
+</span><span id="line-25"></span><span>        </span><span id="local-6989586621679048311"><span class="annot"><span class="annottext">missingGit :: IOError -&gt; Maybe ()
+</span><a href="#local-6989586621679048311"><span class="hs-identifier hs-var hs-var">missingGit</span></a></span></span><span> </span><span id="local-6989586621679048306"><span class="annot"><span class="annottext">IOError
+</span><a href="#local-6989586621679048306"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">IOErrorType -&gt; Bool
 </span><span class="hs-identifier hs-var">isDoesNotExistErrorType</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IOError -&gt; IOErrorType
 </span><span class="hs-identifier hs-var">ioeGetErrorType</span></span><span> </span><span class="annot"><span class="annottext">IOError
-</span><a href="#local-6989586621679048254"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">() -&gt; Maybe ()
+</span><a href="#local-6989586621679048306"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">() -&gt; Maybe ()
 forall a. a -&gt; Maybe a
 </span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Maybe ()
 forall a. Maybe a

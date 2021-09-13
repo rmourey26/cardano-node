@@ -4,7 +4,7 @@
 </span><span id="line-4"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Test.Golden.Shelley.TextEnvelope.Tx.TxBody.html#golden_shelleyTxBody"><span class="hs-identifier">golden_shelleyTxBody</span></a></span><span>
 </span><span id="line-5"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
 </span><span id="line-6"></span><span>
-</span><span id="line-7"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><a href="../file:///home/runner/work/cardano-node/cardano-node/dist-newstyle/build/x86_64-linux/ghc-8.10.4/cardano-api-1.28.0/noopt/doc/html/cardano-api/src"><span class="hs-identifier">Cardano.Api</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///home/runner/work/cardano-node/cardano-node/dist-newstyle/build/x86_64-linux/ghc-8.10.4/cardano-api-1.28.0/noopt/doc/html/cardano-api/src"><span class="hs-identifier">AsType</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="../file:///home/runner/work/cardano-node/cardano-node/dist-newstyle/build/x86_64-linux/ghc-8.10.4/cardano-api-1.28.0/noopt/doc/html/cardano-api/src"><span class="hs-identifier">HasTextEnvelope</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><a href="../file:///home/runner/work/cardano-node/cardano-node/dist-newstyle/build/x86_64-linux/ghc-8.10.4/cardano-api-1.29.0/noopt/doc/html/cardano-api/src"><span class="hs-identifier">Cardano.Api</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///home/runner/work/cardano-node/cardano-node/dist-newstyle/build/x86_64-linux/ghc-8.10.4/cardano-api-1.29.0/noopt/doc/html/cardano-api/src"><span class="hs-identifier">AsType</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="../file:///home/runner/work/cardano-node/cardano-node/dist-newstyle/build/x86_64-linux/ghc-8.10.4/cardano-api-1.29.0/noopt/doc/html/cardano-api/src"><span class="hs-identifier">HasTextEnvelope</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
 </span><span id="line-8"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Cardano.Prelude</span></span><span>
 </span><span id="line-9"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><span class="hs-identifier">Hedgehog</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Property</span></span><span class="hs-special">)</span><span>
 </span><span id="line-10"></span><span class="hs-keyword">import</span><span>           </span><span class="annot"><a href="Test.OptParse.html"><span class="hs-identifier">Test.OptParse</span></a></span><span>
@@ -33,11 +33,11 @@ FilePath -&gt; (FilePath -&gt; m ()) -&gt; m ()
 </span><span class="hs-string">&quot;tmp&quot;</span></span><span> </span><span class="annot"><span class="annottext">((FilePath -&gt; PropertyT IO ()) -&gt; Property)
 -&gt; (FilePath -&gt; PropertyT IO ()) -&gt; Property
 forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679204725"><span class="annot"><span class="annottext">FilePath
-</span><a href="#local-6989586621679204725"><span class="hs-identifier hs-var">tempDir</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679205481"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679205481"><span class="hs-identifier hs-var">tempDir</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
 </span><span id="line-20"></span><span>  </span><span class="hs-comment">-- Reference keys</span><span>
-</span><span id="line-21"></span><span>  </span><span id="local-6989586621679204724"><span class="annot"><span class="annottext">FilePath
-</span><a href="#local-6989586621679204724"><span class="hs-identifier hs-var">referenceTxBody</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; PropertyT IO FilePath
+</span><span id="line-21"></span><span>  </span><span id="local-6989586621679205480"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679205480"><span class="hs-identifier hs-var">referenceTxBody</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; PropertyT IO FilePath
 forall (m :: * -&gt; *).
 (MonadTest m, HasCallStack) =&gt;
 FilePath -&gt; m FilePath
@@ -45,13 +45,13 @@ FilePath -&gt; m FilePath
 </span><span class="hs-string">&quot;test/data/golden/shelley/tx/txbody&quot;</span></span><span>
 </span><span id="line-22"></span><span>
 </span><span id="line-23"></span><span>  </span><span class="hs-comment">-- Key filepaths</span><span>
-</span><span id="line-24"></span><span>  </span><span id="local-6989586621679204722"><span class="annot"><span class="annottext">FilePath
-</span><a href="#local-6989586621679204722"><span class="hs-identifier hs-var">transactionBodyFile</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; FilePath -&gt; PropertyT IO FilePath
+</span><span id="line-24"></span><span>  </span><span id="local-6989586621679205478"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679205478"><span class="hs-identifier hs-var">transactionBodyFile</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; FilePath -&gt; PropertyT IO FilePath
 forall (m :: * -&gt; *).
 (MonadTest m, HasCallStack) =&gt;
 FilePath -&gt; FilePath -&gt; m FilePath
 </span><a href="Test.OptParse.html#noteTempFile"><span class="hs-identifier hs-var">noteTempFile</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
-</span><a href="#local-6989586621679204725"><span class="hs-identifier hs-var">tempDir</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679205481"><span class="hs-identifier hs-var">tempDir</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
 </span><span class="hs-string">&quot;transaction-body-file&quot;</span></span><span>
 </span><span id="line-25"></span><span>
 </span><span id="line-26"></span><span>  </span><span class="hs-comment">-- Create transaction body</span><span>
@@ -82,14 +82,14 @@ forall (m :: * -&gt; *).
 </span><span class="hs-string">&quot;500000&quot;</span></span><span>
 </span><span id="line-33"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">FilePath
 </span><span class="hs-string">&quot;--out-file&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">FilePath
-</span><a href="#local-6989586621679204722"><span class="hs-identifier hs-var">transactionBodyFile</span></a></span><span>
+</span><a href="#local-6989586621679205478"><span class="hs-identifier hs-var">transactionBodyFile</span></a></span><span>
 </span><span id="line-34"></span><span>    </span><span class="hs-special">]</span><span>
 </span><span id="line-35"></span><span>
-</span><span id="line-36"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679204718"><span class="annot"><span class="annottext">txBodyType :: TextEnvelopeType
-</span><a href="#local-6989586621679204718"><span class="hs-identifier hs-var hs-var">txBodyType</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">AsType (TxBody MaryEra) -&gt; TextEnvelopeType
+</span><span id="line-36"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679205474"><span class="annot"><span class="annottext">txBodyType :: TextEnvelopeType
+</span><a href="#local-6989586621679205474"><span class="hs-identifier hs-var hs-var">txBodyType</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">AsType (TxBody MaryEra) -&gt; TextEnvelopeType
 forall a. HasTextEnvelope a =&gt; AsType a -&gt; TextEnvelopeType
-</span><a href="../file:///home/runner/work/cardano-node/cardano-node/dist-newstyle/build/x86_64-linux/ghc-8.10.4/cardano-api-1.28.0/noopt/doc/html/cardano-api/src"><span class="hs-identifier hs-var">textEnvelopeType</span></a></span><span> </span><span class="annot"><span class="annottext">AsType (TxBody MaryEra)
-</span><a href="../file:///home/runner/work/cardano-node/cardano-node/dist-newstyle/build/x86_64-linux/ghc-8.10.4/cardano-api-1.28.0/noopt/doc/html/cardano-api/src"><span class="hs-identifier hs-var">AsMaryTxBody</span></a></span><span>
+</span><a href="../file:///home/runner/work/cardano-node/cardano-node/dist-newstyle/build/x86_64-linux/ghc-8.10.4/cardano-api-1.29.0/noopt/doc/html/cardano-api/src"><span class="hs-identifier hs-var">textEnvelopeType</span></a></span><span> </span><span class="annot"><span class="annottext">AsType (TxBody MaryEra)
+</span><a href="../file:///home/runner/work/cardano-node/cardano-node/dist-newstyle/build/x86_64-linux/ghc-8.10.4/cardano-api-1.29.0/noopt/doc/html/cardano-api/src"><span class="hs-identifier hs-var">AsMaryTxBody</span></a></span><span>
 </span><span id="line-37"></span><span>
 </span><span id="line-38"></span><span>  </span><span class="hs-comment">-- Check the newly created files have not deviated from the</span><span>
 </span><span id="line-39"></span><span>  </span><span class="hs-comment">-- golden files</span><span>
@@ -98,7 +98,7 @@ forall (m :: * -&gt; *).
 (MonadTest m, MonadIO m, HasCallStack) =&gt;
 TextEnvelopeType -&gt; FilePath -&gt; FilePath -&gt; m ()
 </span><a href="Test.OptParse.html#checkTextEnvelopeFormat"><span class="hs-identifier hs-var">checkTextEnvelopeFormat</span></a></span><span> </span><span class="annot"><span class="annottext">TextEnvelopeType
-</span><a href="#local-6989586621679204718"><span class="hs-identifier hs-var">txBodyType</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
-</span><a href="#local-6989586621679204724"><span class="hs-identifier hs-var">referenceTxBody</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
-</span><a href="#local-6989586621679204722"><span class="hs-identifier hs-var">transactionBodyFile</span></a></span><span>
+</span><a href="#local-6989586621679205474"><span class="hs-identifier hs-var">txBodyType</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679205480"><span class="hs-identifier hs-var">referenceTxBody</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679205478"><span class="hs-identifier hs-var">transactionBodyFile</span></a></span><span>
 </span><span id="line-41"></span></pre></body></html>
